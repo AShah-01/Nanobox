@@ -1,0 +1,71 @@
+.focus-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.focus-widget__phase {
+  font-size: 0.75em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+.focus-widget__phase--work {
+  color: var(--nb-accent);
+  background: rgba(124, 156, 255, 0.15);
+}
+
+.focus-widget__phase--break {
+  color: #8affc1;
+  background: rgba(138, 255, 193, 0.15);
+}
+
+.focus-widget__time {
+  font-size: 2.4em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-widget__controls {
+  display: flex;
+  gap: 8px;
+}
+
+.focus-widget__btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 8px;
+  color: var(--nb-text);
+  font-size: 0.85em;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+.focus-widget__btn--primary {
+  background: var(--nb-accent);
+  color: #0d0f16;
+  font-weight: 600;
+}
+
+.focus-widget__btn:hover {
+  filter: brightness(1.1);
+}
+
+.focus-widget__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75em;
+  color: var(--nb-text-muted);
+  cursor: pointer;
+}
+
+.focus-widget__cycles {
+  font-size: 0.72em;
+  color: var(--nb-text-muted);
+}

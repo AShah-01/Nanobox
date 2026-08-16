@@ -1,0 +1,106 @@
+.shortcuts-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.shortcuts-widget.is-drag-over {
+  background: rgba(124, 156, 255, 0.1);
+  outline: 2px dashed var(--nb-accent);
+}
+
+.shortcuts-widget__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 10px;
+}
+
+.shortcuts-widget__tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.shortcuts-widget__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: var(--nb-accent);
+  color: #0d0f16;
+  font-weight: 700;
+  font-size: 1.1em;
+  cursor: pointer;
+}
+
+.shortcuts-widget__icon:hover {
+  filter: brightness(1.1);
+}
+
+.shortcuts-widget__label {
+  font-size: 0.72em;
+  color: var(--nb-text-muted);
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+
+.shortcuts-widget__rename-input {
+  width: 60px;
+  font-size: 0.72em;
+  background: var(--nb-surface);
+  border: var(--nb-border-style);
+  border-radius: 4px;
+  color: var(--nb-text);
+  text-align: center;
+}
+
+.shortcuts-widget__delete {
+  position: absolute;
+  top: -6px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--nb-text-muted);
+  font-size: 0.7em;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.shortcuts-widget__tile:hover .shortcuts-widget__delete {
+  opacity: 1;
+}
+
+.shortcuts-widget__add-tile {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  background: none;
+  color: var(--nb-text-muted);
+  font-size: 1.2em;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.shortcuts-widget__add-tile:hover {
+  border-color: var(--nb-accent);
+  color: var(--nb-accent);
+}
+
+.shortcuts-widget__hint {
+  margin: 0;
+  font-size: 0.72em;
+  color: var(--nb-text-muted);
+}

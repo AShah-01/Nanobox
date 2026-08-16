@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Clock } from "./widgets/built-in";
+import { WidgetGrid } from "./widgets/WidgetGrid";
 import { ensureAutostart } from "./core/autostart";
 import { getDb } from "./storage/db";
 
@@ -11,7 +11,7 @@ function App() {
 
   return (
     <main className="overlay">
-      <Clock />
+      <WidgetGrid />
     </main>
   );
 }

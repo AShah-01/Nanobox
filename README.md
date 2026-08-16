@@ -54,6 +54,27 @@ nanobox/
 
 ## Getting started
 
+**First time here?** All you need is [Node.js](https://nodejs.org/) installed,
+then:
+
+```bash
+git clone https://github.com/AShah-01/Nanobox.git
+cd Nanobox
+npm install
+npm link
+```
+
+From then on, typing `nanobox` in any terminal opens a local setup guide in
+your browser (`http://localhost:4317`) with copyable, platform-specific
+commands for everything else — installing Rust, the native build tools,
+running the app, all of it. Re-run it any time with `nanobox`, or
+`npm run guide` from inside the repo if you'd rather not `npm link` globally.
+
+Nanobox isn't published to an app store or as a standalone installer yet —
+right now, running it from source via this guide *is* the install process.
+Once packaged releases exist, they'll be linked from the guide page and from
+this README.
+
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) 20+

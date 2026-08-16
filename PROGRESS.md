@@ -84,3 +84,126 @@
 
 See [ROADMAP.md](ROADMAP.md) — Notes, Alarm, App Shortcuts, Countdown, Habit
 Tracker, and Focus Mode widgets, plus the resizable/draggable widget grid.
+
+## Session 2 — 2026-08-16 — Core widgets + dev tooling [CEO-approved]
+
+**Milestone 2 (see [ROADMAP.md](ROADMAP.md)): done**, built on branch
+`milestone-2/core-widgets`, merged to `main` via PR once CI confirmed clean
+builds on both platforms. Also added a git branching workflow and a
+local onboarding tool that weren't part of the original roadmap but were
+requested directly this session.
+
+### Branching workflow (new)
+
+`main` stays the always-green, CI-verified branch. Milestone work now happens
+on a `milestone-N/description` branch, gets a PR, and only merges once the
+Windows + macOS CI matrix is green on it — same bar `PLAN.md` already set for
+`main`, just enforced per-branch before integration instead of after.
+
+### Local setup guide + `nanobox` command (new)
+
+- `scripts/setup-guide/` — a small static page (no framework) with copyable,
+  OS-aware setup commands (Node, Rust, MSVC/Xcode tools, clone, install, run).
+- `scripts/serve-guide.mjs` — dependency-free Node static server + auto-opens
+  the default browser at `http://localhost:4317`.
+- `npm run guide` runs it from inside the repo. `npm link` (documented in
+  README) also registers it as a global `nanobox` command — per the ask, a
+  fresh clone can `npm install && npm link` once and then just type `nanobox`
+  in any terminal to reopen the guide. Verified both paths end-to-end
+  (`npm run guide` and the linked `nanobox` binary) hit `http://localhost:4317`
+  with a 200.
+- Since there's no packaged installer or store listing yet, the guide (and
+  README) are explicit that running from source *is* the current install
+  path — future packaged releases will be linked from both places.
+- Caught and fixed a real bug while testing this in the browser pane: the
+  Windows/macOS step toggle relied on the `hidden` attribute, but `.step {
+  display: flex }` had equal CSS specificity and won, so both platforms'
+  steps showed at once. Fixed with an explicit `[hidden] { display: none
+  !important; }` rule.
+
+### Storage: migration v2
+
+New SQLite tables (`src-tauri/src/lib.rs`, migration version 2): `alarms`,
+`shortcuts`, `countdowns`, `habits`, `habit_logs`, `widget_instances`. Typed
+CRUD wrappers for each in `src/storage/`. `notes` gained real create/update/
+delete/pin methods (Milestone 1 only had `listNotes`).
+
+### Widgets built
+
+- **Notes** — create/edit/delete/pin, 6-colour label swatch, inline edit form.
+- **Alarms** — time + label + day-of-week toggles + sound picker. Sounds are
+  synthesized with the Web Audio API (`src/widgets/built-in/Alarm/tones.ts`)
+  instead of bundled audio files — three distinct oscillator patterns (chime/
+  beep/digital), no binary assets to ship. An in-widget scheduler polls every
+  20s, fires an OS notification (`tauri-plugin-notification`) plus an inline
+  ringing banner with Snooze (+5 min) / Dismiss.
+- **App Shortcuts** — add via native file picker (`tauri-plugin-dialog`) or
+  by dragging files/apps onto the widget (`getCurrentWebview().onDragDropEvent`);
+  launches via `tauri-plugin-opener`'s `openPath`; double-click to rename.
+  Icons are a coloured initial tile, not extracted OS icons — real icon
+  extraction is unresearched and deferred.
+- **Countdown** — label + target date, live days/hours/minutes remaining.
+- **Habit Tracker** — daily checkbox per habit, streak computed client-side
+  from the last 90 days of logs (`computeStreak` in `src/storage/habits.ts`).
+- **Focus Mode** — Pomodoro timer (25/5, not yet user-configurable), OS
+  notification on phase change, optional "hide other widgets while focusing"
+  wired through a new minimal external store (`src/core/focusModeStore.ts`,
+  `useSyncExternalStore`-style, no state library added).
+
+### Widget grid (new: `src/widgets/WidgetGrid.tsx`)
+
+Replaces Milestone 1's single hardcoded `<Clock />`. Widget instances
+(type/position/size/opacity) persist in the new `widget_instances` table.
+Drag via a hover-revealed grip strip, resize via a corner handle — both hand-
+rolled with pointer events + `setPointerCapture`, snapped to 8px on release
+(matches `PRODUCT_SPEC.md`'s grid spec). Per-widget gear popover for opacity
++ remove. Bottom-right "+ Add widget" menu to place any of the 7 registry
+types. No collision detection — overlapping widgets is possible; not solved
+this session.
+
+### Build verification
+
+- `npx tsc --noEmit` — clean.
+- `cargo check` — clean, including the two new plugins (`tauri-plugin-dialog`,
+  `tauri-plugin-notification`).
+- `npm run test` — passing (unchanged Clock test).
+- `npm run tauri dev` — compiled and ran with no runtime errors in the
+  terminal/webview console log.
+- `npm run tauri build -- --debug` — see PR CI status for the Windows +
+  macOS matrix result.
+- **Not done**: interactive manual QA (actually dragging/resizing widgets,
+  clicking through each widget's forms) — Nanobox isn't installed as a
+  registered app in this environment, so the available screen-automation
+  tooling can't target its window. Verification here is compile + type-check
+  + runtime-log-clean, same bar as Milestone 1. Recommend a manual pass
+  before relying on drag/resize/forms in daily use.
+
+### Copilot PR review
+
+GitHub's Copilot reviewer left 8 comments on [PR #1](https://github.com/AShah-01/Nanobox/pull/1).
+Fixed before merge: invalid `<p>` directly inside `<ul>` for the empty-state
+message (Notes, Alarm, Countdown, Habit Tracker — changed to `<li>`), a
+missing `.catch()` on the App Shortcuts drag-drop handler, and an unused
+`runningRef` in Focus Mode. One comment was a false positive — it claimed
+`path.join(root, path)` in `scripts/serve-guide.mjs` discards `root` because
+`path` starts with `/`; that's `path.resolve` behavior, not `path.join`
+(verified directly: `join('/a/b','/index.html')` → `a\b\index.html`, and the
+guide server had already been curl-tested returning 200). Left as-is. The
+remaining comment — WidgetGrid has no tests — is a fair miss; not addressed
+this session, noted below.
+
+### Known gaps / deliberately deferred
+
+- Overlay is still `alwaysOnBottom`, not true desktop-embedded (unchanged
+  from Milestone 1's disclosed gap).
+- Alarm days-of-week + snooze logic is polled every 20s client-side, not a
+  real OS-level scheduled task — alarms won't fire if the app isn't running.
+- App Shortcuts icons are placeholder tiles, not real extracted icons.
+- No widget-collision handling in the grid.
+- Focus Mode's 25/5 intervals aren't user-configurable yet.
+- No tests for `WidgetGrid` or the new widgets (only `Clock` has coverage).
+
+### Next up (Milestone 3)
+
+Theme engine — token pipeline, all six themes, hot-swapping, accessibility
+baseline. See [ROADMAP.md](ROADMAP.md).

@@ -1,0 +1,181 @@
+.widget-grid {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.widget-grid__cell {
+  position: absolute;
+  transition: opacity 0.25s ease;
+}
+
+.widget-grid__cell.is-dimmed {
+  opacity: 0.08 !important;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.widget-grid__cell .widget-frame {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-grid__cell .widget-frame__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.widget-grid__chrome {
+  position: absolute;
+  top: -18px;
+  left: 0;
+  right: 0;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.widget-grid__cell:hover .widget-grid__chrome {
+  opacity: 1;
+}
+
+.widget-grid__chrome:active {
+  cursor: grabbing;
+}
+
+.widget-grid__grip {
+  color: var(--nb-text-muted);
+  font-size: 0.8em;
+  letter-spacing: -2px;
+}
+
+.widget-grid__gear {
+  background: none;
+  border: none;
+  color: var(--nb-text-muted);
+  cursor: pointer;
+  font-size: 0.85em;
+  line-height: 1;
+}
+
+.widget-grid__gear:hover {
+  color: var(--nb-text);
+}
+
+.widget-grid__content {
+  height: 100%;
+}
+
+.widget-grid__resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  cursor: se-resize;
+  opacity: 0;
+}
+
+.widget-grid__cell:hover .widget-grid__resize {
+  opacity: 1;
+  background: linear-gradient(135deg, transparent 50%, var(--nb-text-muted) 50%);
+  border-bottom-right-radius: var(--nb-radius);
+}
+
+.widget-grid__popover {
+  position: absolute;
+  top: -18px;
+  right: 0;
+  transform: translateY(-100%);
+  background: var(--nb-surface-alt);
+  border: var(--nb-border-style);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.78em;
+  z-index: 10;
+  min-width: 160px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.widget-grid__popover label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--nb-text-muted);
+}
+
+.widget-grid__remove {
+  background: rgba(255, 138, 138, 0.15);
+  border: none;
+  border-radius: 6px;
+  color: #ff8a8a;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.widget-grid__add {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+}
+
+.widget-grid__add-btn {
+  background: var(--nb-accent);
+  color: #0d0f16;
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.82em;
+  padding: 8px 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.widget-grid__add-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 8px;
+  background: var(--nb-surface-alt);
+  border: var(--nb-border-style);
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.widget-grid__add-menu button {
+  background: none;
+  border: none;
+  color: var(--nb-text);
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.widget-grid__add-menu button:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget-grid__cell,
+  .widget-grid__chrome {
+    transition: none;
+  }
+}
