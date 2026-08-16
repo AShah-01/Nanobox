@@ -207,3 +207,160 @@ this session, noted below.
 
 Theme engine — token pipeline, all six themes, hot-swapping, accessibility
 baseline. See [ROADMAP.md](ROADMAP.md).
+
+## Session 3 — 2026-08-16 — Theme engine, part 1 [CEO-approved]
+
+**Milestone 3 (see [ROADMAP.md](ROADMAP.md)): partially done**, built on
+branch `milestone-3/theme-engine`. This session covers the token pipeline,
+all six themes, hot-swapping, and the accessibility baseline. Per-theme user
+customisation (colour picker, opacity, font/radius/border overrides,
+`.nanotheme` export/import) and colour-blindness simulation checks are
+deliberately deferred to a future session — the milestone didn't fit in one
+night, and this is a complete, reviewable slice rather than a rushed whole.
+
+### Token pipeline
+
+- New `--nb-accent-text` custom property, added to the existing `--nb-*` set
+  (`src/themes/base.css`). It was needed, not optional: the seven places that
+  put text/icons on an accent-coloured surface (Notes' primary button, Alarm's
+  day toggle + primary button, Focus Mode's primary button, Habit Tracker's
+  progress fill + primary button, App Shortcuts' upload button, the widget
+  grid's "+ Add widget" button) all hardcoded `color: #0d0f16` (near-black).
+  That's fine when the accent is light, but several of the new themes use a
+  *dark* accent (Matte's navy `#2b3a67`, Liquid Glass's blue `#0059b3`) —
+  black-on-navy text would have been unreadable and failed WCAG outright.
+  Replaced every hardcoded instance with `var(--nb-accent-text)`, which each
+  theme sets to whichever of black/white actually contrasts against its own
+  accent colour. Verified computationally (see below), not by eyeballing.
+- `src/tokens/tokens.json` restructured: a `default` block mirroring
+  `base.css`'s fallback `:root`, plus a `themes` map with one entry per theme
+  mirroring its actual CSS file. The CSS files remain the source of truth
+  (same relationship the pre-existing tokens.json already had to base.css);
+  the JSON is documentation/seed for a future real token→CSS build step, not
+  itself consumed by any code yet.
+
+### Six themes (`src/themes/{liquid-glass,matte,glossy,retro,cyberpunk,steampunk}.css`)
+
+Each is a `:root[data-theme="<id>"]` block overriding the full `--nb-*` set,
+plus a small amount of theme-specific `.widget-frame` styling for the effects
+that CSS custom properties alone can't express:
+
+- **Liquid Glass** — translucent surface colours + `backdrop-filter:
+  blur(28px) saturate(180%)` on the widget frame and title bar, large 22px
+  radius, soft white inset highlight.
+- **Matte** — flat, zero blur/shadow, an inline SVG fractal-noise texture at
+  4% opacity blended with `multiply`, small 4px radius, deep navy accent.
+- **Glossy** — a white-to-transparent gradient overlay + inset box-shadows
+  (light top edge, dark bottom edge) to fake an Aqua-era bevel, bright
+  surfaces.
+- **Retro** — near-black surface, green phosphor text with a subtle
+  text-shadow glow, amber accent, monospace font stack, an animated
+  scanline overlay (`repeating-linear-gradient` + `@keyframes`).
+- **Cyberpunk** — deep purple-black surface, cyan accent, magenta+cyan glow
+  box-shadow on the frame, its own animated scanline overlay, monospace font.
+- **Steampunk** — dark brown/sepia surfaces, brass accent, serif font, a
+  faint inline-SVG gear watermark in the top-right corner of each widget
+  frame, double brass border.
+- Fonts are all system/generic stacks (`monospace`, `serif`, platform sans) —
+  deliberately not pulling from a web font CDN so the app keeps working
+  offline. Bundling real display fonts under `public/fonts/` (the folder
+  already exists for this) is future work if the generic stacks aren't
+  distinctive enough.
+- `data-theme` lives on `<html>` (set synchronously to `"matte"` in
+  `index.html` so there's no flash-of-wrong-theme before JS runs, then kept
+  in sync by `src/core/themeStore.ts`). All six stylesheets are imported
+  once in `main.tsx`; swapping the attribute is what makes theme changes
+  instant with no reload — confirmed by clicking through all six in a live
+  browser session (see Verification below).
+
+### Switching + persistence
+
+- `src/core/themeStore.ts` — same minimal external-store shape as the
+  existing `focusModeStore.ts` (`getTheme`/`setTheme`/`subscribeTheme`), plus
+  `initTheme()` to load the persisted choice on startup.
+- `src/storage/settings.ts` + migration v3 (`src-tauri/src/lib.rs`) — a new
+  generic `app_settings` key/value table (`INSERT ... ON CONFLICT DO
+  UPDATE`), used to persist the chosen theme id under the key `"theme"`. This
+  is the first use of that table; it's intentionally generic so future
+  settings don't each need their own migration.
+- `src/components/ThemeSwitcher.tsx` — minimal floating control, bottom-left
+  (mirrors the existing "+ Add widget" button's bottom-right placement and
+  visual language), `🎨` toggle button opens a menu of all six themes with
+  label + one-line description, `role="menuitemradio"` / `aria-checked` on
+  each option for the active theme.
+
+### Accessibility baseline
+
+- Contrast: every theme's text/surface, muted-text/surface, and
+  accent/accent-text pair was computed with the WCAG relative-luminance
+  formula (script in scratchpad, not committed) before writing the CSS, not
+  adjusted after the fact. All pairs clear 4.5:1 (AA); Matte clears 7:1
+  (AAA) on every pair, matching its "AAA baseline" requirement in
+  ROADMAP.md. Full numbers are in this session's tool history if they need
+  re-checking later.
+- `:focus-visible` — one global rule in `base.css` (`outline: 2px solid
+  var(--nb-accent)`) covers every interactive element in every theme
+  automatically, since it's written once against the token rather than
+  per-widget. Verified via a real Tab keypress in a live page + reading the
+  focused element's computed `outline*` properties, not just visual
+  inspection.
+- `prefers-reduced-motion` — unchanged from Milestone 1's existing global
+  rule in `base.css` (kills all `animation-duration`/`transition-duration`).
+  Both new theme animations (Retro's and Cyberpunk's scanline drift) use
+  plain CSS `animation`, so they're covered by that rule for free — no new
+  reduced-motion code needed.
+- Colour-blindness simulation checks: **not done this session** — noted as
+  deferred in ROADMAP.md rather than silently skipped.
+
+### Verification
+
+- `npx tsc --noEmit` — clean (after `npm install`; `node_modules` wasn't
+  present at session start in this container).
+- `npm run test` — 3/3 passing. Added `tests/components/ThemeSwitcher.test.tsx`
+  (hot-swap updates `document.documentElement.dataset.theme` with no reload;
+  all six themes appear in the switcher menu). Also fixed a latent test-infra
+  bug while writing it: `tests/setup.ts` had no global
+  `afterEach(cleanup)`, so a test file that renders more than once (mine does)
+  left stale DOM around from the previous render and `getByLabelText` found
+  duplicates. Fixed centrally in `tests/setup.ts` rather than per-file, since
+  it would have bitten the next multi-render test too.
+- `cargo check` in `src-tauri/` — **could not run**: this container has
+  `cargo` installed but not the Linux GTK/GDK system libraries Tauri's Linux
+  backend needs (`gdk-3.0` via pkg-config), so the build fails before it
+  reaches any of tonight's actual code. This is an environment gap, not a
+  code issue — Milestone 1 and 2 sessions hit the same wall implicitly (their
+  `cargo check` runs happened on a Windows dev machine, not this container).
+  The Rust change this session is small and mechanical (one new `Migration`
+  entry, same shape as the existing two) — real verification is the
+  `windows-latest`/`macos-latest` matrix in CI on the PR, per
+  `.github/workflows/build.yml`.
+- Manual visual QA: ran the Vite dev server standalone (`npx vite`, outside
+  the Tauri shell — Tauri isn't installed/registered in this container
+  either) and drove it with Playwright. Confirmed: switching through all six
+  themes changes the switcher/add-widget button colours instantly with no
+  navigation; injected a real `.widget-frame` element per theme (the widget
+  grid itself can't load without Tauri's SQLite IPC bridge, which isn't
+  available outside the real app shell — same limitation Sessions 1-2 noted)
+  and confirmed each theme's distinguishing effect renders as intended: Liquid
+  Glass's blur, Matte's noise texture, Glossy's bevel/gloss, Retro's and
+  Cyberpunk's scanlines, Steampunk's gear watermark. Console showed only the
+  expected "Tauri IPC not available" errors already present on every widget
+  outside the real shell (not new); no new errors from theme code.
+
+### Known gaps / deliberately deferred
+
+- Per-theme user customisation (colour picker, opacity, font family/scale,
+  corner radius, border style, `.nanotheme` export/import) — the second half
+  of Milestone 3, not started.
+- Colour-blindness simulation checks — not implemented.
+- Fonts are generic system stacks, not real bundled display fonts (no
+  network font loading, to keep the app working offline) — revisit if the
+  themes need to look more distinctive.
+- `cargo check` unverified in this environment (see Verification above) —
+  CI is the real gate.
+
+### Next up (rest of Milestone 3)
+
+Per-theme customisation UI + `.nanotheme` export/import, then
+colour-blindness simulation checks, before moving to Milestone 4
+(Integrations). See [ROADMAP.md](ROADMAP.md).

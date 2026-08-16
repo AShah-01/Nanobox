@@ -1,0 +1,19 @@
+/* Matte — flat, paper-like, no blur, subtle noise texture, WCAG AAA baseline. */
+:root[data-theme="matte"] {
+  --nb-surface: #efece4;
+  --nb-surface-alt: #ffffff;
+  --nb-text: #1a1a1a;
+  --nb-text-muted: #54514a;
+  --nb-accent: #2b3a67;
+  --nb-accent-text: #f5f5f5;
+  --nb-radius: 4px;
+  --nb-border-style: 1px solid rgba(0, 0, 0, 0.14);
+  --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nb-font-scale: 1;
+}
+
+[data-theme="matte"] .widget-frame {
+  box-shadow: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-blend-mode: multiply;
+}

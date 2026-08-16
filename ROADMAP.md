@@ -33,16 +33,21 @@ app builds cleanly on both platforms (see [PLAN.md](PLAN.md)).
 
 See [PROGRESS.md](PROGRESS.md) session 2 for implementation notes and known gaps.
 
-## Milestone 3 — Theme engine
+## Milestone 3 — Theme engine (in progress)
 
-- CSS custom property token pipeline (`--nb-surface`, `--nb-text`,
-  `--nb-accent`, `--nb-border-style`, `--nb-radius`, `--nb-font-family`)
-- All six themes: Liquid Glass, Matte, Glossy, Retro, Cyberpunk, Steampunk
-- Hot-swappable theme switching (no reload)
-- Per-theme user customisation: colour picker, opacity, font family/scale,
-  corner radius, border style; export/import as `.nanotheme`
-- Accessibility baseline: WCAG AA contrast on every theme, `:focus-visible`
-  rings, `prefers-reduced-motion` support, colour-blindness simulation checks
+- [x] CSS custom property token pipeline (`--nb-surface`, `--nb-text`,
+      `--nb-accent`, `--nb-border-style`, `--nb-radius`, `--nb-font-family`,
+      plus `--nb-accent-text` added this session — see PROGRESS.md session 3)
+- [x] All six themes: Liquid Glass, Matte, Glossy, Retro, Cyberpunk, Steampunk
+- [x] Hot-swappable theme switching (no reload), minimal theme switcher UI
+- [x] Accessibility baseline: WCAG AA contrast on every theme, `:focus-visible`
+      rings, `prefers-reduced-motion` support
+- [ ] Per-theme user customisation: colour picker, opacity, font family/scale,
+      corner radius, border style; export/import as `.nanotheme`
+- [ ] Colour-blindness simulation checks
+
+See [PROGRESS.md](PROGRESS.md) session 3 for implementation notes and what's
+left before this milestone is fully done.
 
 ## Milestone 4 — Integrations
 

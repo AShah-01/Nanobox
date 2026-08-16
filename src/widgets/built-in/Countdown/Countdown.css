@@ -103,7 +103,7 @@
 
 .countdown-widget__btn--primary {
   background: var(--nb-accent) !important;
-  color: #0d0f16 !important;
+  color: var(--nb-accent-text) !important;
   font-weight: 600;
 }
 

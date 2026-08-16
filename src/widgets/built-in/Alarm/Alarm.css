@@ -155,7 +155,7 @@
 
 .alarm-widget__day.is-selected {
   background: var(--nb-accent);
-  color: #0d0f16;
+  color: var(--nb-accent-text);
   border-color: var(--nb-accent);
 }
 
@@ -186,7 +186,7 @@
 
 .alarm-widget__btn--primary {
   background: var(--nb-accent) !important;
-  color: #0d0f16 !important;
+  color: var(--nb-accent-text) !important;
   font-weight: 600;
 }
 

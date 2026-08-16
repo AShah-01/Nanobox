@@ -132,7 +132,7 @@
 
 .widget-grid__add-btn {
   background: var(--nb-accent);
-  color: #0d0f16;
+  color: var(--nb-accent-text);
   border: none;
   border-radius: 999px;
   font-weight: 600;

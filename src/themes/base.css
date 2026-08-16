@@ -1,8 +1,11 @@
 /*
  * Base design tokens as CSS custom properties, mirroring src/tokens/tokens.json.
- * This is the pre-theme-engine default look. Milestone 3 replaces/extends this
- * with the six swappable themes (Liquid Glass, Matte, Glossy, Retro, Cyberpunk,
- * Steampunk), each overriding the same --nb-* variable set.
+ * These are the fallback values used when no theme has been applied yet (e.g.
+ * a component rendered in isolation in tests). The six real themes live next
+ * to this file (liquid-glass.css, matte.css, glossy.css, retro.css,
+ * cyberpunk.css, steampunk.css) and override this same --nb-* set under a
+ * `:root[data-theme="..."]` selector — index.html sets data-theme="matte" by
+ * default so the app never flashes these fallback values.
  */
 :root {
   --nb-surface: #14151a;
@@ -10,6 +13,7 @@
   --nb-text: #f2f3f7;
   --nb-text-muted: #9a9db0;
   --nb-accent: #7c9cff;
+  --nb-accent-text: #0d0f16;
   --nb-radius: 14px;
   --nb-border-style: 1px solid rgba(255, 255, 255, 0.08);
   --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -37,4 +41,15 @@ body,
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/*
+ * Every interactive element gets a visible keyboard-focus ring in every
+ * theme, using that theme's accent colour. Per-widget CSS may add its own
+ * more specific :focus-visible rule (e.g. inset instead of outset) but
+ * should not remove this baseline.
+ */
+:focus-visible {
+  outline: 2px solid var(--nb-accent);
+  outline-offset: 2px;
 }

@@ -177,7 +177,7 @@
 
 .notes-widget__btn--primary {
   background: var(--nb-accent);
-  color: #0d0f16;
+  color: var(--nb-accent-text);
   font-weight: 600;
 }
 

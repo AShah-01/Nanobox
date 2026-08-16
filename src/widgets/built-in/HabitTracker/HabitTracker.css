@@ -33,7 +33,7 @@
   height: 20px;
   border-radius: 6px;
   border: 2px solid;
-  color: #0d0f16;
+  color: var(--nb-accent-text);
   font-size: 0.7em;
   font-weight: 700;
   cursor: pointer;
@@ -129,7 +129,7 @@
 
 .habit-widget__btn--primary {
   background: var(--nb-accent) !important;
-  color: #0d0f16 !important;
+  color: var(--nb-accent-text) !important;
   font-weight: 600;
 }
 
