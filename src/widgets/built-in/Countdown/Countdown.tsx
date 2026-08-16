@@ -63,7 +63,7 @@ export function Countdown() {
               </li>
             );
           })}
-          {countdowns.length === 0 && <p className="countdown-widget__empty">No countdowns yet.</p>}
+          {countdowns.length === 0 && <li className="countdown-widget__empty">No countdowns yet.</li>}
         </ul>
 
         {showForm ? (

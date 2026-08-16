@@ -178,6 +178,20 @@ this session.
   + runtime-log-clean, same bar as Milestone 1. Recommend a manual pass
   before relying on drag/resize/forms in daily use.
 
+### Copilot PR review
+
+GitHub's Copilot reviewer left 8 comments on [PR #1](https://github.com/AShah-01/Nanobox/pull/1).
+Fixed before merge: invalid `<p>` directly inside `<ul>` for the empty-state
+message (Notes, Alarm, Countdown, Habit Tracker — changed to `<li>`), a
+missing `.catch()` on the App Shortcuts drag-drop handler, and an unused
+`runningRef` in Focus Mode. One comment was a false positive — it claimed
+`path.join(root, path)` in `scripts/serve-guide.mjs` discards `root` because
+`path` starts with `/`; that's `path.resolve` behavior, not `path.join`
+(verified directly: `join('/a/b','/index.html')` → `a\b\index.html`, and the
+guide server had already been curl-tested returning 200). Left as-is. The
+remaining comment — WidgetGrid has no tests — is a fair miss; not addressed
+this session, noted below.
+
 ### Known gaps / deliberately deferred
 
 - Overlay is still `alwaysOnBottom`, not true desktop-embedded (unchanged
@@ -187,6 +201,7 @@ this session.
 - App Shortcuts icons are placeholder tiles, not real extracted icons.
 - No widget-collision handling in the grid.
 - Focus Mode's 25/5 intervals aren't user-configurable yet.
+- No tests for `WidgetGrid` or the new widgets (only `Clock` has coverage).
 
 ### Next up (Milestone 3)
 

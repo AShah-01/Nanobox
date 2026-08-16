@@ -76,7 +76,7 @@ export function Notes() {
                 </button>
               </li>
             ))}
-            {notes.length === 0 && <p className="notes-widget__empty">No notes yet.</p>}
+            {notes.length === 0 && <li className="notes-widget__empty">No notes yet.</li>}
           </ul>
         )}
 

@@ -148,7 +148,7 @@ export function Alarm() {
               )}
             </li>
           ))}
-          {alarms.length === 0 && <p className="alarm-widget__empty">No alarms set.</p>}
+          {alarms.length === 0 && <li className="alarm-widget__empty">No alarms set.</li>}
         </ul>
 
         {showForm ? (

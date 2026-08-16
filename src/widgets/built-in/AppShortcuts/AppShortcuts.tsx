@@ -33,7 +33,9 @@ export function AppShortcuts() {
           setDragOver(true);
         } else if (event.payload.type === "drop") {
           setDragOver(false);
-          Promise.all(event.payload.paths.map((p) => createShortcut({ label: baseName(p), target_path: p }))).then(refresh);
+          Promise.all(event.payload.paths.map((p) => createShortcut({ label: baseName(p), target_path: p })))
+            .then(refresh)
+            .catch((err) => console.error("failed to add dropped shortcut", err));
         } else {
           setDragOver(false);
         }

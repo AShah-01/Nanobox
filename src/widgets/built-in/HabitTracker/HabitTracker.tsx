@@ -76,7 +76,7 @@ export function HabitTracker() {
               </li>
             );
           })}
-          {habits.length === 0 && <p className="habit-widget__empty">No habits yet.</p>}
+          {habits.length === 0 && <li className="habit-widget__empty">No habits yet.</li>}
         </ul>
 
         {showForm ? (

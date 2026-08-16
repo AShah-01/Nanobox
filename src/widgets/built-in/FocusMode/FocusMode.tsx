@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { sendNotification } from "@tauri-apps/plugin-notification";
 import { WidgetFrame } from "../../../components/WidgetFrame";
 import { setHideOthers } from "../../../core/focusModeStore";
@@ -23,8 +23,6 @@ export function FocusMode() {
   const [running, setRunning] = useState(false);
   const [cycles, setCycles] = useState(0);
   const [hideOthersChecked, setHideOthersChecked] = useState(true);
-  const runningRef = useRef(running);
-  runningRef.current = running;
 
   useEffect(() => {
     if (!running) return;
