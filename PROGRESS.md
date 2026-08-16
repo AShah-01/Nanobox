@@ -2,7 +2,7 @@
 
 ## Session 1 — 2026-08-16 — Foundation scaffold [CEO-approved]
 
-**Milestone 1, tasks 1–4 (see [ROADMAP.md](ROADMAP.md)): done, pending CI confirmation on macOS.**
+**Milestone 1, tasks 1–4 (see [ROADMAP.md](ROADMAP.md)): done. CI confirms clean builds on both Windows and macOS ([run 31942683609](https://github.com/AShah-01/Nanobox/actions/runs/31942683609)) — clear to start Milestone 2.**
 
 ### What was built
 
@@ -63,10 +63,9 @@
   `nanobox.exe`, an MSI installer, and an NSIS installer under
   `src-tauri/target/debug/bundle/`.
 - `npm run test` — 1/1 passing.
-- macOS build: **not run locally** (no Mac available in this environment) —
-  relying on the `macos-latest` job in the new CI workflow to confirm it.
-  Per `ROADMAP.md` / `PLAN.md`, Milestone 2 shouldn't start until that job is
-  green.
+- macOS build: not run locally (no Mac available in this environment) — the
+  `macos-latest` CI job compiled and bundled the app successfully
+  (3m36s), confirming Milestone 1 builds cleanly on both target platforms.
 
 ### Known gaps / deliberately deferred
 
