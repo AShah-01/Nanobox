@@ -3,21 +3,84 @@ use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_sql::{Migration, MigrationKind};
 
-fn notes_table_migration() -> Migration {
-    Migration {
-        version: 1,
-        description: "create_notes_table",
-        sql: "CREATE TABLE IF NOT EXISTS notes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL DEFAULT '',
-            body TEXT NOT NULL DEFAULT '',
-            color TEXT,
-            pinned INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT NOT NULL DEFAULT (datetime('now')),
-            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );",
-        kind: MigrationKind::Up,
-    }
+fn migrations() -> Vec<Migration> {
+    vec![
+        Migration {
+            version: 1,
+            description: "create_notes_table",
+            sql: "CREATE TABLE IF NOT EXISTS notes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL DEFAULT '',
+                body TEXT NOT NULL DEFAULT '',
+                color TEXT,
+                pinned INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 2,
+            description: "milestone_2_widget_tables",
+            sql: "
+                CREATE TABLE IF NOT EXISTS alarms (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    label TEXT NOT NULL DEFAULT '',
+                    time TEXT NOT NULL,
+                    days TEXT NOT NULL DEFAULT '',
+                    sound TEXT NOT NULL DEFAULT 'chime',
+                    enabled INTEGER NOT NULL DEFAULT 1,
+                    snoozed_until TEXT,
+                    last_fired_on TEXT,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+
+                CREATE TABLE IF NOT EXISTS shortcuts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    label TEXT NOT NULL,
+                    target_path TEXT NOT NULL,
+                    sort_order INTEGER NOT NULL DEFAULT 0,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+
+                CREATE TABLE IF NOT EXISTS countdowns (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    label TEXT NOT NULL,
+                    target_date TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+
+                CREATE TABLE IF NOT EXISTS habits (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    color TEXT NOT NULL DEFAULT '#7c9cff',
+                    sort_order INTEGER NOT NULL DEFAULT 0,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+
+                CREATE TABLE IF NOT EXISTS habit_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    habit_id INTEGER NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+                    log_date TEXT NOT NULL,
+                    completed INTEGER NOT NULL DEFAULT 1,
+                    UNIQUE(habit_id, log_date)
+                );
+
+                CREATE TABLE IF NOT EXISTS widget_instances (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    widget_type TEXT NOT NULL,
+                    x INTEGER NOT NULL DEFAULT 24,
+                    y INTEGER NOT NULL DEFAULT 24,
+                    w INTEGER NOT NULL DEFAULT 240,
+                    h INTEGER NOT NULL DEFAULT 160,
+                    opacity REAL NOT NULL DEFAULT 1,
+                    settings TEXT,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
+    ]
 }
 
 fn toggle_overlay(app: &tauri::AppHandle) {
@@ -40,9 +103,11 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(
             tauri_plugin_sql::Builder::default()
-                .add_migrations("sqlite:nanobox.db", vec![notes_table_migration()])
+                .add_migrations("sqlite:nanobox.db", migrations())
                 .build(),
         )
         .setup(|app| {

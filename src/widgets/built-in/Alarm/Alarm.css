@@ -1,0 +1,213 @@
+.alarm-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alarm-widget__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.alarm-widget__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.alarm-widget__item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.alarm-widget__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.alarm-widget__time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.92em;
+}
+
+.alarm-widget__meta {
+  font-size: 0.75em;
+  color: var(--nb-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alarm-widget__delete {
+  background: none;
+  border: none;
+  color: var(--nb-text-muted);
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.alarm-widget__delete:hover {
+  color: var(--nb-text);
+}
+
+.alarm-widget__empty {
+  color: var(--nb-text-muted);
+  font-size: 0.85em;
+  margin: 0;
+}
+
+.alarm-widget__item.is-ringing {
+  background: rgba(255, 138, 138, 0.15);
+  border-radius: 8px;
+  animation: alarm-pulse 1s ease-in-out infinite;
+}
+
+@keyframes alarm-pulse {
+  0%,
+  100% {
+    background: rgba(255, 138, 138, 0.1);
+  }
+  50% {
+    background: rgba(255, 138, 138, 0.25);
+  }
+}
+
+.alarm-widget__ringing {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 4px;
+  width: 100%;
+  font-size: 0.85em;
+}
+
+.alarm-widget__ringing-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.alarm-widget__ringing-actions button {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text);
+  padding: 5px;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.alarm-widget__form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: var(--nb-border-style);
+  padding-top: 8px;
+}
+
+.alarm-widget__form-row {
+  display: flex;
+  gap: 6px;
+}
+
+.alarm-widget__time-input,
+.alarm-widget__label-input,
+.alarm-widget__sound {
+  background: var(--nb-surface);
+  border: var(--nb-border-style);
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-family: inherit;
+  font-size: 0.85em;
+  padding: 5px 8px;
+}
+
+.alarm-widget__label-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.alarm-widget__days {
+  display: flex;
+  gap: 4px;
+}
+
+.alarm-widget__day {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: var(--nb-border-style);
+  background: transparent;
+  color: var(--nb-text-muted);
+  font-size: 0.72em;
+  cursor: pointer;
+}
+
+.alarm-widget__day.is-selected {
+  background: var(--nb-accent);
+  color: #0d0f16;
+  border-color: var(--nb-accent);
+}
+
+.alarm-widget__preview {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text);
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.alarm-widget__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.alarm-widget__form-actions button {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.8em;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.alarm-widget__btn--primary {
+  background: var(--nb-accent) !important;
+  color: #0d0f16 !important;
+  font-weight: 600;
+}
+
+.alarm-widget__add {
+  align-self: flex-start;
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--nb-text-muted);
+  font-size: 0.82em;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.alarm-widget__add:hover {
+  border-color: var(--nb-accent);
+  color: var(--nb-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alarm-widget__item.is-ringing {
+    animation: none;
+  }
+}

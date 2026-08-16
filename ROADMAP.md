@@ -21,15 +21,17 @@ app builds cleanly on both platforms (see [PLAN.md](PLAN.md)).
 5. GitHub Actions CI: build matrix for `windows-latest` and `macos-latest`,
    confirms the app builds cleanly on both before Milestone 2 starts
 
-## Milestone 2 — Core widgets
+## Milestone 2 — Core widgets ✅
 
-- Notes widget: create, edit, delete, pin, colour label (SQLite-backed)
-- Alarm widget: list view, time picker, sound picker, day-of-week toggles, snooze
-- App Shortcuts widget: drag-in icons, launch on click, editable labels
-- Countdown widget: timer counting down to a date
-- Habit Tracker widget: daily checkbox habits with streak counter
-- Focus Mode widget: Pomodoro-style timer, optionally hides other widgets
-- Widget grid system: 8px snapping, resize handles, per-widget opacity slider
+- [x] Notes widget: create, edit, delete, pin, colour label (SQLite-backed)
+- [x] Alarm widget: list view, time picker, sound picker, day-of-week toggles, snooze
+- [x] App Shortcuts widget: drag-in icons, launch on click, editable labels
+- [x] Countdown widget: timer counting down to a date
+- [x] Habit Tracker widget: daily checkbox habits with streak counter
+- [x] Focus Mode widget: Pomodoro-style timer, optionally hides other widgets
+- [x] Widget grid system: 8px snapping, resize handles, per-widget opacity slider
+
+See [PROGRESS.md](PROGRESS.md) session 2 for implementation notes and known gaps.
 
 ## Milestone 3 — Theme engine
 
