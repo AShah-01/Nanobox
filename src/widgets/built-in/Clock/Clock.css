@@ -1,0 +1,18 @@
+.clock-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.clock-widget__time {
+  font-size: 2.2em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--nb-text);
+}
+
+.clock-widget__date {
+  font-size: 0.85em;
+  color: var(--nb-text-muted);
+}

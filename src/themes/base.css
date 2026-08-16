@@ -1,0 +1,40 @@
+/*
+ * Base design tokens as CSS custom properties, mirroring src/tokens/tokens.json.
+ * This is the pre-theme-engine default look. Milestone 3 replaces/extends this
+ * with the six swappable themes (Liquid Glass, Matte, Glossy, Retro, Cyberpunk,
+ * Steampunk), each overriding the same --nb-* variable set.
+ */
+:root {
+  --nb-surface: #14151a;
+  --nb-surface-alt: #1c1e26;
+  --nb-text: #f2f3f7;
+  --nb-text-muted: #9a9db0;
+  --nb-accent: #7c9cff;
+  --nb-radius: 14px;
+  --nb-border-style: 1px solid rgba(255, 255, 255, 0.08);
+  --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nb-font-scale: 1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: transparent;
+  color: var(--nb-text);
+  font-family: var(--nb-font-family);
+  font-size: calc(16px * var(--nb-font-scale));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

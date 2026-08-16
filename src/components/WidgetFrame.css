@@ -1,0 +1,21 @@
+.widget-frame {
+  background: var(--nb-surface-alt);
+  border: var(--nb-border-style);
+  border-radius: var(--nb-radius);
+  overflow: hidden;
+  -webkit-app-region: drag;
+}
+
+.widget-frame__title {
+  padding: 6px 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--nb-text-muted);
+  border-bottom: var(--nb-border-style);
+}
+
+.widget-frame__body {
+  padding: 16px;
+  -webkit-app-region: no-drag;
+}

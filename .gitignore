@@ -1,0 +1,35 @@
+# Nanobox planning docs (kept local, never pushed)
+/TaskFiles/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+
+# Tauri / Rust
+src-tauri/target/
+src-tauri/Cargo.lock.bak
+
+# SQLite local data
+*.db
+*.sqlite
+*.sqlite3
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.claude/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
