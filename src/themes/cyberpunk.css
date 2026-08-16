@@ -1,0 +1,45 @@
+/* Cyberpunk — neon noir, neon accents, scanline overlay, mono font. */
+:root[data-theme="cyberpunk"] {
+  --nb-surface: #0d0221;
+  --nb-surface-alt: #150a30;
+  --nb-text: #f2f2ff;
+  --nb-text-muted: #b9a8e8;
+  --nb-accent: #00e5ff;
+  --nb-accent-text: #0d0f16;
+  --nb-radius: 6px;
+  --nb-border-style: 1px solid rgba(0, 229, 255, 0.55);
+  --nb-font-family: "Share Tech Mono", ui-monospace, "SFMono-Regular", monospace;
+  --nb-font-scale: 1;
+}
+
+[data-theme="cyberpunk"] .widget-frame {
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255, 0, 200, 0.25),
+    0 0 18px rgba(0, 229, 255, 0.25);
+}
+
+[data-theme="cyberpunk"] .widget-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 229, 255, 0.06) 0px,
+    rgba(0, 229, 255, 0.06) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  animation: nb-cyberpunk-scan 6s linear infinite;
+}
+
+@keyframes nb-cyberpunk-scan {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 120px;
+  }
+}

@@ -31,7 +31,7 @@
   border-radius: 10px;
   border: none;
   background: var(--nb-accent);
-  color: #0d0f16;
+  color: var(--nb-accent-text);
   font-weight: 700;
   font-size: 1.1em;
   cursor: pointer;

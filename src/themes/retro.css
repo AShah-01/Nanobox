@@ -1,0 +1,43 @@
+/* Retro — CRT terminal, monospace, green phosphor on black, scanlines. */
+:root[data-theme="retro"] {
+  --nb-surface: #050805;
+  --nb-surface-alt: #081208;
+  --nb-text: #33ff66;
+  --nb-text-muted: #25b84d;
+  --nb-accent: #ffb000;
+  --nb-accent-text: #0d0f16;
+  --nb-radius: 2px;
+  --nb-border-style: 1px solid rgba(51, 255, 102, 0.4);
+  --nb-font-family: "Courier New", ui-monospace, "SFMono-Regular", monospace;
+  --nb-font-scale: 1;
+}
+
+[data-theme="retro"] .widget-frame {
+  text-shadow: 0 0 3px rgba(51, 255, 102, 0.55);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="retro"] .widget-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.25) 0px,
+    rgba(0, 0, 0, 0.25) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  animation: nb-retro-scan 8s linear infinite;
+}
+
+@keyframes nb-retro-scan {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 120px;
+  }
+}
