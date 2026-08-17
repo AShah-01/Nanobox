@@ -40,9 +40,14 @@ describe("expandRRule", () => {
   it("only returns occurrences intersecting the requested range", () => {
     const rule = parseRRule("FREQ=WEEKLY;COUNT=10")!;
     const dtstart = new Date("2026-01-01T09:00:00");
-    const occurrences = expandRRule(rule, dtstart, new Date("2026-02-01"), new Date("2026-02-28"));
+    // Same local-time-construction pitfall as the tests above, plus reusing
+    // the same Date instances in the assertion instead of re-parsing the
+    // strings a second time, so there's no way for the two to drift apart.
+    const rangeStart = new Date("2026-02-01T00:00:00");
+    const rangeEnd = new Date("2026-02-28T23:59:59");
+    const occurrences = expandRRule(rule, dtstart, rangeStart, rangeEnd);
 
-    expect(occurrences.every((d) => d >= new Date("2026-02-01") && d <= new Date("2026-02-28"))).toBe(true);
+    expect(occurrences.every((d) => d >= rangeStart && d <= rangeEnd)).toBe(true);
     expect(occurrences.length).toBeGreaterThan(0);
   });
 });

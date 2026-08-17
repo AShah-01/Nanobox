@@ -28,10 +28,22 @@ export function parseRRule(value: string): RRule | null {
   if (freq !== "DAILY" && freq !== "WEEKLY" && freq !== "MONTHLY" && freq !== "YEARLY") return null;
   if (parts.BYDAY || parts.BYMONTHDAY || parts.BYSETPOS || parts.BYMONTH) return null;
 
+  // A malformed INTERVAL/COUNT (e.g. "INTERVAL=foo") must not silently become
+  // NaN — that propagates into step()'s date arithmetic and produces
+  // Invalid Date/garbage occurrences. Treat it the same as an unsupported
+  // rule shape: return null rather than guess.
+  const interval = parts.INTERVAL ? parseInt(parts.INTERVAL, 10) : 1;
+  if (!Number.isFinite(interval)) return null;
+  let count: number | undefined;
+  if (parts.COUNT) {
+    count = parseInt(parts.COUNT, 10);
+    if (!Number.isFinite(count)) return null;
+  }
+
   return {
     freq,
-    interval: parts.INTERVAL ? Math.max(1, parseInt(parts.INTERVAL, 10)) : 1,
-    count: parts.COUNT ? parseInt(parts.COUNT, 10) : undefined,
+    interval: Math.max(1, interval),
+    count,
     until: parts.UNTIL ? parseIcsDateTime(parts.UNTIL, false).date : undefined,
   };
 }

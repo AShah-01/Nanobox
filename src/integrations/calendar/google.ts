@@ -63,38 +63,66 @@ interface GoogleEventItem {
   end?: { date?: string; dateTime?: string };
 }
 
+interface GoogleEventsResponse {
+  items?: GoogleEventItem[];
+  nextPageToken?: string;
+}
+
+/**
+ * Google's all-day `date` fields are plain "YYYY-MM-DD" with no time or
+ * offset. `new Date("YYYY-MM-DD")` parses that as UTC midnight, which lands
+ * on the *previous* local day in any timezone behind UTC — silently wrong
+ * for day-based display (`eventsOnDay`/`startOfDay` in dateUtils.ts). Parse
+ * it as local midnight instead, same convention `icsDate.ts` uses for .ics
+ * all-day values.
+ */
+function parseGoogleDateOnly(dateOnly: string): Date {
+  const [y, m, d] = dateOnly.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 /**
  * Fetches events from the user's primary Google Calendar in [rangeStart,
- * rangeEnd]. Throws on network/auth failure — callers fall back to the last
- * cached copy (see storage/calendar.ts) rather than surfacing a blank widget.
+ * rangeEnd], following `nextPageToken` until exhausted (a busy calendar can
+ * exceed a single 250-result page). Throws on network/auth failure —
+ * callers fall back to the last cached copy (see storage/calendar.ts)
+ * rather than surfacing a blank widget.
  */
 export async function fetchGoogleEvents(sourceId: number, rangeStart: Date, rangeEnd: Date): Promise<CalendarEvent[]> {
   const accessToken = await getValidAccessToken();
   if (!accessToken) throw new Error("Google Calendar is not connected");
 
-  const url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
-  url.searchParams.set("timeMin", rangeStart.toISOString());
-  url.searchParams.set("timeMax", rangeEnd.toISOString());
-  url.searchParams.set("singleEvents", "true");
-  url.searchParams.set("orderBy", "startTime");
-  url.searchParams.set("maxResults", "250");
+  const items: GoogleEventItem[] = [];
+  let pageToken: string | undefined;
 
-  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!res.ok) throw new Error(`Google Calendar fetch failed: ${res.status}`);
-  const json: { items?: GoogleEventItem[] } = await res.json();
+  do {
+    const url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
+    url.searchParams.set("timeMin", rangeStart.toISOString());
+    url.searchParams.set("timeMax", rangeEnd.toISOString());
+    url.searchParams.set("singleEvents", "true");
+    url.searchParams.set("orderBy", "startTime");
+    url.searchParams.set("maxResults", "250");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
 
-  return (json.items ?? [])
+    const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error(`Google Calendar fetch failed: ${res.status}`);
+    const json: GoogleEventsResponse = await res.json();
+    items.push(...(json.items ?? []));
+    pageToken = json.nextPageToken;
+  } while (pageToken);
+
+  return items
     .filter((item) => item.start && item.end)
     .map((item) => {
       const allDay = Boolean(item.start!.date);
-      const start = item.start!.dateTime ?? item.start!.date!;
-      const end = item.end!.dateTime ?? item.end!.date!;
+      const start = allDay ? parseGoogleDateOnly(item.start!.date!) : new Date(item.start!.dateTime!);
+      const end = allDay ? parseGoogleDateOnly(item.end!.date!) : new Date(item.end!.dateTime!);
       return {
         id: `${sourceId}:${item.id}`,
         sourceId,
         title: item.summary || "(untitled)",
-        start: new Date(start).toISOString(),
-        end: new Date(end).toISOString(),
+        start: start.toISOString(),
+        end: end.toISOString(),
         allDay,
         location: item.location,
         description: item.description,

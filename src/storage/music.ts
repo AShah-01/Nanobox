@@ -1,9 +1,17 @@
 import { getSetting, setSetting } from "./settings";
+import { MUSIC_PROVIDERS } from "../integrations/music";
 import { MusicProviderId, NowPlayingData } from "../integrations/music/types";
 
+/**
+ * Validates the persisted value against the actual provider list rather
+ * than trusting a raw string cast — an old build, a manual DB edit, or a
+ * provider getting renamed/removed could otherwise leave an unrecognized
+ * id here, which would crash Music.tsx's `providerById(id)!` on load.
+ */
 export async function getActiveMusicProvider(): Promise<MusicProviderId | null> {
   const value = await getSetting("music.activeProvider");
-  return (value as MusicProviderId | "") || null;
+  const isValid = MUSIC_PROVIDERS.some((p) => p.id === value);
+  return isValid ? (value as MusicProviderId) : null;
 }
 
 export async function setActiveMusicProvider(id: MusicProviderId | null): Promise<void> {
