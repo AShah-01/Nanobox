@@ -3,6 +3,9 @@ use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_sql::{Migration, MigrationKind};
 
+mod keychain;
+mod oauth;
+
 fn migrations() -> Vec<Migration> {
     vec![
         Migration {
@@ -168,6 +171,37 @@ fn migrations() -> Vec<Migration> {
             sql: "ALTER TABLE widget_instances ADD COLUMN style_settings TEXT;",
             kind: MigrationKind::Up,
         },
+        // Superseded by calendar_sources/calendar_events_cache below — v5's
+        // calendar_events was a flat "import .ics events" table with no
+        // multi-source support, no Google Calendar, and no cache-based
+        // graceful degradation. Never rewrite an already-numbered migration
+        // (anyone who already ran v5 needs it to stay exactly as it was) —
+        // drop-and-replace happens in a new migration instead.
+        Migration {
+            version: 7,
+            description: "milestone_5_integrations_tables",
+            sql: "
+                DROP TABLE IF EXISTS calendar_events;
+
+                CREATE TABLE IF NOT EXISTS calendar_sources (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    kind TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    file_path TEXT,
+                    account_email TEXT,
+                    color TEXT NOT NULL DEFAULT '#7c9cff',
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+
+                CREATE TABLE IF NOT EXISTS calendar_events_cache (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source_id INTEGER NOT NULL REFERENCES calendar_sources(id) ON DELETE CASCADE,
+                    event_json TEXT NOT NULL,
+                    cached_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -216,42 +250,6 @@ fn save_custom_widget_file(app: tauri::AppHandle, filename: String, contents: St
     Ok(path.to_string_lossy().to_string())
 }
 
-/// Thin wrapper over the OS keychain (Windows Credential Manager / macOS
-/// Keychain / Linux Secret Service via the `keyring` crate) for integration
-/// tokens — per PRODUCT_SPEC.md, these must never land in SQLite or a
-/// plaintext file. `service` namespaces entries per integration (e.g.
-/// "nanobox-spotify"); `account` is the key within it (e.g. "client_id",
-/// "access_token").
-#[tauri::command]
-fn secure_set(service: String, account: String, value: String) -> Result<(), String> {
-    keyring::Entry::new(&service, &account)
-        .and_then(|entry| entry.set_password(&value))
-        .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn secure_get(service: String, account: String) -> Result<Option<String>, String> {
-    match keyring::Entry::new(&service, &account) {
-        Ok(entry) => match entry.get_password() {
-            Ok(value) => Ok(Some(value)),
-            Err(keyring::Error::NoEntry) => Ok(None),
-            Err(e) => Err(e.to_string()),
-        },
-        Err(e) => Err(e.to_string()),
-    }
-}
-
-#[tauri::command]
-fn secure_delete(service: String, account: String) -> Result<(), String> {
-    match keyring::Entry::new(&service, &account) {
-        Ok(entry) => match entry.delete_credential() {
-            Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
-            Err(e) => Err(e.to_string()),
-        },
-        Err(e) => Err(e.to_string()),
-    }
-}
-
 fn toggle_overlay(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("overlay") {
         let visible = window.is_visible().unwrap_or(false);
@@ -283,9 +281,10 @@ pub fn run() {
             read_text_file,
             save_custom_widget_file,
             custom_widgets_dir,
-            secure_set,
-            secure_get,
-            secure_delete
+            keychain::secure_set,
+            keychain::secure_get,
+            keychain::secure_delete,
+            oauth::oauth_await_redirect,
         ])
         .setup(|app| {
             let show_hide = MenuItem::with_id(app, "show_hide", "Show / Hide Nanobox", true, None::<&str>)?;

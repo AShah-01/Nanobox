@@ -31,9 +31,9 @@ export type WidgetId =
   | "task-breakdown"
   | "mood-check-in"
   | "gentle-reminders"
-  | "custom"
   | "calendar"
-  | "music";
+  | "music"
+  | "custom";
 
 /**
  * "custom" is deliberately excluded here — unlike every other widget, it
@@ -74,9 +74,9 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   "task-breakdown": "Task Breakdown",
   "mood-check-in": "Mood Check-in",
   "gentle-reminders": "Gentle Reminders",
-  custom: "Custom Widget (developer)",
   calendar: "Calendar",
   music: "Music",
+  custom: "Custom Widget (developer)",
 };
 
 export const DEFAULT_SIZE: Record<WidgetId, { w: number; h: number }> = {
@@ -93,7 +93,7 @@ export const DEFAULT_SIZE: Record<WidgetId, { w: number; h: number }> = {
   "task-breakdown": { w: 280, h: 320 },
   "mood-check-in": { w: 260, h: 220 },
   "gentle-reminders": { w: 260, h: 280 },
+  calendar: { w: 380, h: 380 },
+  music: { w: 280, h: 240 },
   custom: { w: 300, h: 280 },
-  calendar: { w: 300, h: 340 },
-  music: { w: 280, h: 300 },
 };

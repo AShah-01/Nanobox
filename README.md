@@ -7,7 +7,7 @@
 > calendar, alarms, clocks, shortcuts, and a lego-block custom widget builder,
 > all in one persistent, themeable desktop hub.
 
-**Status:** Pre-release, active development (Milestone 6 — window chrome & widget UX fixes; see [ROADMAP.md](ROADMAP.md)).
+**Status:** Pre-release, active development (Milestone 5 — Calendar + Music integrations, including real Google Calendar/Spotify OAuth — complete; see [ROADMAP.md](ROADMAP.md)).
 
 ---
 

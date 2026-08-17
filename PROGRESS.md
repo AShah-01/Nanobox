@@ -868,3 +868,322 @@ Either continue clearing Milestone 6's remaining checkbox items if the
 window-chrome fixes need a second pass after real-world confirmation, or
 move to whichever of Milestone 3 (per-theme customisation)/4 (Companion
 widget)/5 (OAuth) the user prioritises next. See [ROADMAP.md](ROADMAP.md).
+
+## Session 6 (parallel effort) — 2026-08-17 — Milestone 5: Calendar + Music integrations
+
+Built independently and concurrently with this file's own Session 6, by the
+nightly cron routine on branch `claude/milestone-5-8d2pih` — neither agent
+knew about the other's work until both were done (see the "Postscript" at
+the end of the *other* Session 6 entry above for the full story of how that
+happened and what was decided). This entry is that routine's own
+first-person account, kept verbatim as the historical record of what it
+actually built. Session 8 below covers how it was ultimately integrated
+into `main`.
+
+**Milestone 5: mostly done.** Calendar widget fully built (local `.ics` +
+Google Calendar). Music widget's provider architecture is done and Spotify
+is fully wired up; Apple Music, YouTube Music, and YouTube are deliberately
+**not** implemented — each hit a real, structural blocker rather than a
+"ran out of time" cut, detailed below.
+
+### Secure token storage (`src-tauri/src/keychain.rs`)
+
+Three Tauri commands (`secure_set`/`secure_get`/`secure_delete`) wrapping
+the `keyring` crate (v4.1.6), which talks to each OS's native credential
+store — Windows Credential Manager, macOS Keychain, the Secret Service on
+Linux. This is what ROADMAP.md's "secure token storage via Tauri's OS
+keychain integration" meant literally: OAuth tokens for both Calendar and
+Music never touch SQLite or a plaintext file, full stop. Frontend wrapper:
+`src/integrations/secureStore.ts`.
+
+### OAuth loopback helper (`src-tauri/src/oauth.rs` + `src/integrations/oauth/pkce.ts`)
+
+Both Google Calendar and Spotify need the standard RFC 8252 desktop OAuth
+pattern: open the system browser at the provider's consent screen, catch
+the redirect on a local loopback port, exchange the code for tokens. Wrote
+this once as shared infrastructure instead of duplicating it per provider:
+
+- `oauth_await_redirect(port)` (Rust, std-only — no extra HTTP crate) binds
+  the given port, waits (up to 5 minutes, polled non-blocking) for one
+  request, parses the query string out of the request line, replies with a
+  "you can close this" HTML page, and hands the query string back.
+- `runOAuthPkceFlow()` (TypeScript) generates the PKCE verifier/challenge
+  and CSRF state with Web Crypto, opens the browser via
+  `@tauri-apps/plugin-opener`, awaits the redirect, verifies `state`, and
+  does the token exchange over `fetch`. Both Google's and Spotify's token
+  endpoints support CORS for exactly this public-client PKCE flow, so no
+  extra HTTP plugin was needed.
+- Each provider (Google, Spotify) gets a **fixed** loopback port
+  (42813, 42815) — that's the value the user registers as the redirect URI
+  on their own OAuth app. Since PKCE needs no client secret, users paste
+  their own Client ID into the widget rather than Nanobox shipping one;
+  there's nowhere to safely embed a secret in a distributed desktop binary
+  anyway.
+
+### Calendar widget (`src/widgets/built-in/Calendar/`, `src/integrations/calendar/`)
+
+- **`.ics` parsing** (`ics.ts`, `icsDate.ts`, `rrule.ts`): hand-rolled RFC
+  5545 parser — line unfolding, VEVENT property extraction, DATE vs.
+  DATE-TIME handling. RRULE support is deliberately partial: FREQ (DAILY/
+  WEEKLY/MONTHLY/YEARLY) + INTERVAL + COUNT + UNTIL, covering the large
+  majority of real recurring events. BYDAY/BYMONTHDAY/BYSETPOS (e.g. "every
+  Mon/Wed/Fri", "last Friday of the month") are **not** supported —
+  `parseRRule` returns `null` for those and the event falls back to a
+  single non-repeating occurrence, rather than a half-correct expansion
+  that would silently show wrong dates. TZID-qualified datetimes are
+  treated as local wall-clock time (no bundled IANA tz database); UTC "Z"
+  times and all-day dates are exact.
+- **Google Calendar** (`google.ts`): OAuth PKCE via the shared helper above,
+  read-only `calendar.readonly` scope, fetches the primary calendar's
+  events via the Calendar API, access-token refresh handled transparently.
+- **`CalendarEvent`** is the unified shape both sources normalise into
+  (`types.ts`); `CalendarSource` rows (new `calendar_sources` table,
+  migration v5) track each connected `.ics` file or Google account.
+- **Month/week/day views** (`CalendarViews.tsx`): month is a 6-week grid
+  with coloured dot indicators per source, week is a 7-column agenda list,
+  day is a full agenda. Clicking a month/week day jumps to its day view.
+- **Graceful degradation**: every source's events are cached wholesale in
+  the new `calendar_events_cache` table on a successful fetch. If a live
+  fetch fails (file moved, Google API down, offline), the widget falls back
+  to that cache and shows a small "⚠ showing last synced data" banner
+  instead of going blank.
+
+### Music widget (`src/widgets/built-in/Music/`, `src/integrations/music/`)
+
+- **`NowPlayingData`** unified shape + a `MusicProvider` interface
+  (`isConnected`/`connect`/`disconnect`/`fetchNowPlaying`) so providers are
+  genuinely pluggable — `src/integrations/music/index.ts` is the one place
+  that lists all four.
+- **Spotify** (`spotify.ts`): OAuth PKCE, polls
+  `GET /me/player/currently-playing` every 10s. Deliberately **not** the
+  Web Playback SDK ROADMAP.md named — that SDK turns the app into a
+  controllable playback *device* (streams audio in-browser, requires
+  Premium, needs a persistent player instance), which is a much bigger and
+  different feature than "show what's already playing somewhere else." The
+  read-only polling endpoint does exactly what the widget needs.
+- **Apple Music, YouTube Music, YouTube — not implemented, each for a real
+  reason** (full text in each file, `unavailableReason` surfaced as a
+  tooltip in the widget's disabled provider buttons):
+  - *Apple Music*: MusicKit JS needs a developer token signed with an Apple
+    Developer Program private key (ES256 JWT). That can't happen safely in
+    a pure client-side app — the key would have to ship inside the binary.
+    Needs a token-signing backend Nanobox (local-first, serverless)
+    doesn't have, or a manual per-user token-paste flow.
+  - *YouTube Music*: Odesli/song.link (what ROADMAP.md named) resolves a
+    *known* track link across services — it has no concept of what's
+    currently playing on an account, so it can't drive a live widget by
+    itself, and there's no public YouTube Music now-playing API to poll
+    instead.
+  - *YouTube*: the Data API v3 is a content/catalog API with no "what is
+    this user currently watching" endpoint. Real detection would need
+    browser-extension-level access to an open tab — out of scope for an
+    OAuth API client.
+  
+  These show up in the widget as visibly disabled provider buttons with a
+  "soon" tag and the reason in a tooltip, not as fake/broken connect
+  buttons.
+- **Graceful degradation**: same pattern as Calendar but via
+  `app_settings` (`storage/music.ts`) rather than a new table, since it's
+  just one JSON blob per provider, not a growing list — consistent with
+  how Milestone 3 already used `app_settings` for the theme choice.
+
+### Storage: migration v5
+
+`calendar_sources` and `calendar_events_cache` tables
+(`src-tauri/src/lib.rs`). Music has no new tables — connection state and
+now-playing cache live in the existing `app_settings` key/value table
+(secrets themselves are in the OS keychain, never here).
+
+### New Tauri capability: `fs`
+
+Added `tauri-plugin-fs` (Rust) + `@tauri-apps/plugin-fs` (frontend) with
+`fs:default` + `fs:allow-read-text-file` in `capabilities/default.json`, so
+a `.ics` file picked via the existing dialog plugin can actually be read.
+
+### Tests
+
+Added `tests/integrations/ics.test.ts` (timed events, all-day events, RRULE
+expansion with COUNT, RFC 5545 line unfolding, empty/non-VEVENT input) and
+`tests/integrations/rrule.test.ts` (INTERVAL stepping, UNTIL cutoff, range
+intersection, and confirming BYDAY-style rules correctly return `null`
+instead of guessing) — both pure-logic, no Tauri IPC needed, so they
+actually run in this sandboxed environment. 14/14 tests passing overall
+(was 3/3 before this session).
+
+### Build verification
+
+- `npx tsc --noEmit` — clean.
+- `npm run test` — 14/14 passing (11 new).
+- `cargo check` — **could not complete**, same standing environment gap
+  flagged since session 3: this container is missing the Linux GTK/GDK
+  system libraries (`gdk-3.0` via pkg-config) Tauri needs, so the build
+  fails on a pre-existing dependency (`gdk-sys`) before reaching any code
+  from this session. What *did* succeed first: Cargo fully resolved the
+  dependency graph, including the two new crates — `Cargo.lock` shows
+  `keyring 4.1.6` and `tauri-plugin-fs 2.5.1` resolved cleanly — so the new
+  `Cargo.toml` entries are valid; only the actual C-library compile step is
+  blocked here. Real verification is the `windows-latest`/`macos-latest` CI
+  matrix on the PR, same as every session since 3.
+- No interactive manual QA (same standing gap: Nanobox isn't a registered
+  app in this environment, and this feature specifically needs a real
+  browser-based OAuth round trip that can't be faked). Recommend a manual
+  pass connecting a real Google Calendar and Spotify account before relying
+  on this in daily use — particularly the loopback OAuth redirect (which
+  depends on the exact registered redirect URI matching) and token refresh
+  after the initial access token expires.
+
+### Known gaps / deliberately deferred
+
+- Apple Music, YouTube Music, YouTube now-playing — not implemented, see
+  above. Companion widget from Milestone 4 is still open too.
+- RRULE support is partial (no BYDAY/BYMONTHDAY/BYSETPOS) — see the Calendar
+  section above.
+- TZID-qualified `.ics` datetimes render as local wall-clock time (no
+  bundled timezone database) — only affects `.ics` files containing
+  non-UTC, non-local timezone events.
+- No collision/overlap handling in the calendar month grid beyond a "+N"
+  overflow indicator — same category of gap as the widget grid's lack of
+  collision detection (Milestone 2).
+- Neither widget lets the user reorder or reprioritize sources/providers
+  beyond a flat add/remove list.
+
+### Next up (rest of Milestone 5, then Milestone 6)
+
+If revisited: a manual OAuth QA pass with real accounts, then either accept
+the three deferred music providers as permanently out of scope or design
+around their actual blockers (e.g. a minimal signing backend for Apple
+Music). Otherwise, next milestone is 6 — the Lego block widget builder. See
+[ROADMAP.md](ROADMAP.md).
+
+## Session 8 — 2026-08-17 — Integrating the parallel Milestone 5 effort into main [CEO-approved]
+
+Direct follow-up to Session 6's postscript. User asked to delete the
+now-unnecessary `claude/milestone-5-8d2pih` branch; after explaining what
+was actually on it (working RRULE recurrence + real Google Calendar/Spotify
+OAuth PKCE, tied to open ROADMAP items) the instruction became: merge that
+work into `main` for real, verify it landed, *then* delete the branch. Not
+a trivial merge — that branch predates the final Milestone 5 (this file's
+own Session 6) and all of Milestone 6, so a raw `git merge` produced 14
+conflicting files across docs, Rust, and the calendar/music widgets
+themselves.
+
+### Decision: adopt the parallel branch's Calendar/Music wholesale
+
+Read every file on both sides before resolving anything — not just the
+conflicted ones, the full new-file set too (`rrule.ts`, `google.ts`,
+`spotify.ts`, `oauth/pkce.ts`, `oauth.rs`, `keychain.rs`, `storage/{calendar,music}.ts`,
+`CalendarViews.tsx`, `music/{provider,index,appleMusic,youtube,youtubeMusic}.ts`).
+Confirmed independently (already done in Session 6's postscript, re-confirmed
+here) that this is a strict superset of what Session 6 built: real RRULE
+expansion vs. none, real finished OAuth PKCE flows (including a loopback
+redirect-capture server, `oauth.rs`) vs. explicitly-deferred, a
+multi-source calendar model with cache-based graceful degradation vs. a
+flat import table. Chose to take it wholesale rather than cherry-pick,
+since the two implementations model calendar/music data differently enough
+(sources+cache vs. flat table; provider objects vs. an adapter registry)
+that a partial merge would've meant maintaining two incompatible shapes.
+
+**One deliberate divergence from the branch as-is**: it added
+`tauri-plugin-fs` + `fs:allow-read-text-file` to read `.ics` files, and
+bumped `keyring` from 3→4. Both reverted — kept `main`'s existing
+`read_text_file` custom command (already proven working all session,
+avoids re-verifying an fs-plugin ACL configuration untested in this
+environment) and `main`'s `keyring = "3"` with explicit
+`apple-native`/`windows-native`/`sync-secret-service` features (also
+already proven). `Calendar.tsx`'s one `readTextFile()` call site was the
+only thing that needed adjusting for this — swapped to
+`invoke("read_text_file", {path})`.
+
+### Secure storage: one implementation, not two
+
+Both sessions had independently built a secure-token wrapper — `main` had
+`secure_set/get/delete(service, account, value)`
+(`src/storage/secureStore.ts`, used only by the now-deleted
+`music/adapters.ts`), the parallel branch had `secure_set/get/delete(key)`
+(`src/integrations/secureStore.ts` → `src-tauri/src/keychain.rs`, used
+throughout `spotify.ts`/`google.ts`). Kept the parallel branch's
+simpler key-only version as canonical (everything the merge is bringing in
+already calls it consistently) and deleted `main`'s service+account version
+entirely, since its only consumer (`adapters.ts`) was itself being
+replaced.
+
+### Migration v5 was NOT rewritten
+
+`main`'s migration v5 (`calendar_events`, a flat imported-events table) is
+already shipped — an already-numbered migration must never change retroactively,
+even in a pre-release app with no real users yet, because that's the habit
+that matters once there are. Added **migration v7** instead: drops the now-
+unused `calendar_events` table and creates `calendar_sources` +
+`calendar_events_cache` (the parallel branch's schema, originally numbered
+v5 on its own branch, renumbered to fit after `main`'s v6). Migration v6
+(Milestone 6's `widget_instances.style_settings`) is untouched and sits
+between the old and new calendar schema.
+
+### Files deleted (superseded)
+
+`src/storage/calendarEvents.ts`, `src/storage/secureStore.ts`,
+`src/integrations/music/adapters.ts` (all Session 6's, now fully replaced)
+— confirmed via `grep` that nothing else imported them before deleting.
+
+### Files taken wholesale from the parallel branch
+
+`src/integrations/calendar/{types,ics,rrule,dateUtils,icsDate,google}.ts`,
+`src/integrations/music/{types,provider,index,spotify,appleMusic,youtube,youtubeMusic}.ts`,
+`src/integrations/oauth/pkce.ts`, `src/integrations/secureStore.ts`,
+`src/storage/{calendar,music}.ts`, `src/widgets/built-in/Calendar/{Calendar.tsx*,Calendar.css,CalendarViews.tsx}`,
+`src/widgets/built-in/Music/{Music.tsx,Music.css}`, `src-tauri/src/{keychain,oauth}.rs`,
+`tests/integrations/{ics,rrule}.test.ts`. (*`Calendar.tsx` has the one
+`readTextFile` → `invoke` edit described above; everything else is
+unmodified from the source branch.)
+
+Notably, **`Calendar.tsx`/`Music.tsx` needed zero changes for Milestone 6
+compatibility** — they call `<WidgetFrame title="...">` exactly like every
+other widget, and `WidgetFrame`'s chrome-context-driven drag/settings/close
+(added in Milestone 6, after this branch was created) is applied
+transparently by `WidgetGrid` regardless of what the widget component
+itself does. The two milestones' work composed for free.
+
+### Docs
+
+`README.md`/`ROADMAP.md`/`PLAN.md` conflicts resolved by hand to describe
+the final integrated state, not either branch's snapshot. `PROGRESS.md`'s
+conflict was two full session entries (this file's Session 6 *and* Session
+7) against the parallel branch's one Session 6 — kept all of it: retitled
+the parallel branch's entry "Session 6 (parallel effort)" so both survive
+as accurate history rather than one overwriting the other.
+
+### Build verification
+
+- `npx tsc --noEmit` — clean on the first attempt after resolving every
+  conflict (no leftover import mismatches from the file swaps).
+- `npx vitest run` — 14/14 passing, including the RRULE `COUNT`/`UNTIL`
+  test fix from Session 6's postscript (already on the branch that got
+  merged in, so no repeat work needed).
+- `cargo check` — failed once with a raw TOML parse error because
+  `Cargo.lock`'s conflict markers had been `git add`ed as literal text
+  instead of resolved (staging doesn't validate file content) — caught by
+  actually running the check rather than assuming staging meant resolved.
+  Fixed by deleting `Cargo.lock` and letting `cargo check` regenerate it
+  from the resolved `Cargo.toml`; confirmed the regenerated lock pulled
+  `keyring v3.6.3` (not v4) and no `tauri-plugin-fs`, matching intent.
+- `npm run tauri build -- --debug` — see repo history for this session's
+  run.
+
+### Known gaps / deliberately deferred (carried over, still true)
+
+- OAuth flows compile clean but have never been exercised against real
+  Spotify/Google accounts by a human — no credentials available in this
+  environment. Treat first real use as the actual first test.
+- Apple Music, YouTube Music, YouTube now-playing remain unimplemented,
+  each with a real documented blocker (see their provider files).
+- `.ics` RRULE support excludes `BYDAY`/`BYMONTHDAY`/`BYSETPOS` patterns by
+  design (falls back to a single non-recurring occurrence rather than
+  guessing) — see `rrule.ts`'s own doc comment.
+- No collision/overlap handling in the calendar month grid beyond a "+N"
+  indicator.
+
+### Next up
+
+`claude/milestone-5-8d2pih` gets deleted once this lands and is confirmed
+on `main` — its work no longer lives only there. Next unclaimed milestone
+is 7, the lego-block widget builder. See [ROADMAP.md](ROADMAP.md).
