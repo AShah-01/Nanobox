@@ -1,13 +1,15 @@
-export type MusicSource = "spotify" | "apple-music" | "youtube-music" | "youtube";
+export type MusicProviderId = "spotify" | "apple-music" | "youtube-music" | "youtube";
 
-/** Unified shape every music source normalises "what's playing" into. */
+/** Unified shape every music provider normalises its playback state into. */
 export interface NowPlayingData {
-  title: string;
-  artist: string;
-  album: string;
-  artworkUrl: string | null;
+  provider: MusicProviderId;
   isPlaying: boolean;
-  progressMs: number;
-  durationMs: number;
-  source: MusicSource;
+  trackTitle: string;
+  artist: string;
+  album?: string;
+  artworkUrl?: string;
+  progressMs?: number;
+  durationMs?: number;
+  /** Deep link to open the track in its native app/site. */
+  url?: string;
 }

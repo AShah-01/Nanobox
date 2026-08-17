@@ -90,31 +90,38 @@ repositioned — real bug, not a nice-to-have) and an MVP Custom Widget type
 (sandboxed iframe, dev-authored HTML/CSS/JS) as an early precursor to
 Milestone 6's full block engine. See PROGRESS.md session 5.
 
-## Milestone 5 — Integrations (in progress: local-first foundation done)
+## Milestone 5 — Integrations ✅
 
-Calendar and Music both need OAuth credentials (Google Cloud project,
-Spotify Developer app, a paid Apple Developer membership for MusicKit,
-YouTube Data API key) registered under a real account — not something an
-agent can self-provision. Scoped this session to everything genuinely
-buildable without them; see PROGRESS.md session 6 for the full breakdown
-and what's still gated on credentials.
+Started as two parallel efforts that collided (see PROGRESS.md session 6's
+postscript) — a local-first-only session and a separate, more complete
+attempt with real OAuth. Reconciled in session 8: the complete version's
+Calendar/Music implementation was integrated onto `main`, replacing the
+local-first-only one.
 
-- [x] Secure token storage via the OS keychain (Windows Credential Manager /
-      macOS Keychain / Linux Secret Service, via the Rust `keyring` crate) —
-      `secure_set`/`secure_get`/`secure_delete` commands, never SQLite,
-      never plaintext
-- [x] Calendar widget: local `.ics` file import + parsing, unified
-      `CalendarEvent` interface, Day/Week/Month views
-- [ ] Calendar: Google Calendar OAuth sync — gated on a Google Cloud OAuth
-      client ID
-- [x] Music widget: unified `NowPlayingData` interface, adapter registry
-      for Spotify/Apple Music/YouTube Music/YouTube, credential entry per
-      source (saved via the keychain), graceful "not connected" UI
-- [ ] Music: actual OAuth completion + live now-playing data for each
-      source — gated on credentials per source (see PROGRESS.md session 6
-      for exactly what's needed per service)
-- [x] Graceful degradation: every integration shows a clear "not connected"
-      state rather than failing or showing stale/fake data
+- [x] Secure token storage: OS-native keychain (Windows Credential Manager /
+      macOS Keychain / Linux Secret Service) via the `keyring` Rust crate,
+      exposed as Tauri commands (`src-tauri/src/keychain.rs`) — tokens never
+      touch SQLite or a plaintext file
+- [x] Calendar widget: local `.ics` parsing (RFC 5545 line-unfolding, VEVENT
+      fields, a supported RRULE subset — see `src/integrations/calendar/rrule.ts`)
+      + Google Calendar (OAuth 2.0 PKCE, read-only), unified `CalendarEvent`
+      interface, month/week/day views, multiple sources at once
+- [x] Music widget: unified `NowPlayingData` interface + pluggable provider
+      architecture; Spotify implemented (OAuth PKCE, polling
+      `/me/player/currently-playing` rather than the heavier Web Playback
+      SDK — see PROGRESS.md session 8 for why); Apple Music, YouTube Music,
+      and YouTube deliberately **not** implemented — each has a real
+      blocker, documented at the top of its provider file
+      (`src/integrations/music/{appleMusic,youtubeMusic,youtube}.ts`)
+- [x] Graceful degradation: both widgets cache last-known-good data (SQLite:
+      `calendar_events_cache`, `app_settings` for now-playing) and fall back
+      to it with a visible "offline" indicator when a live fetch fails
+- [ ] Apple Music, YouTube Music, YouTube now-playing — blocked on the
+      reasons above; revisit if/when a plausible mechanism exists
+- [ ] OAuth flows are implemented and compile clean, but **have not been
+      exercised against real Spotify/Google accounts** by a human yet (no
+      credentials available in this environment) — first real use should be
+      treated as the actual first test, not as "already verified"
 
 ## Milestone 6 — Window chrome & widget UX fixes ✅ (pending real-world drag confirmation)
 
@@ -153,9 +160,6 @@ builder, Polish & release) down to 7/8.
 
 See [PROGRESS.md](PROGRESS.md) session 7 for root-cause detail on the
 drag/taskbar bugs and what's still unverified.
-
-See PROGRESS.md for the session this shipped in, including root-cause
-notes for the drag/taskbar bugs.
 
 ## Milestone 7 — Lego block widget builder
 
