@@ -53,7 +53,7 @@ interface CustomWidgetProps {
  * from the app. See ROADMAP.md Milestone 6.
  */
 export function CustomWidget({ instance, onSaved }: CustomWidgetProps) {
-  const initial = useMemo(() => parseSettings(instance.settings), [instance.id]);
+  const initial = useMemo(() => parseSettings(instance.settings), [instance.id, instance.settings]);
   const [editing, setEditing] = useState(instance.settings === null);
   const [code, setCode] = useState(initial);
   const [previewCode, setPreviewCode] = useState(initial);

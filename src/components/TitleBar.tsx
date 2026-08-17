@@ -16,7 +16,12 @@ export function TitleBar() {
         <img src={logoMark} alt="" width="16" height="16" />
         <span>Nanobox</span>
       </div>
-      <button className="title-bar__hide" onClick={() => getCurrentWindow().hide()} aria-label="Hide Nanobox" title="Hide (tray icon shows it again)">
+      <button
+        className="title-bar__hide"
+        onClick={() => getCurrentWindow().hide().catch((err) => console.error("failed to hide window", err))}
+        aria-label="Hide Nanobox"
+        title="Hide (tray icon shows it again)"
+      >
         —
       </button>
     </header>
