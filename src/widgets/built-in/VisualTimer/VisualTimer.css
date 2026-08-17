@@ -1,0 +1,109 @@
+.visual-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.visual-timer__disk {
+  --pct: 1;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: conic-gradient(var(--nb-accent) calc(var(--pct) * 360deg), rgba(255, 255, 255, 0.08) 0deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.9s linear;
+}
+
+.visual-timer__readout {
+  background: var(--nb-surface);
+  border-radius: 50%;
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.05em;
+}
+
+.visual-timer__presets {
+  display: flex;
+  gap: 6px;
+}
+
+.visual-timer__presets button {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text-muted);
+  font-size: 0.78em;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+
+.visual-timer__presets button.is-active {
+  background: var(--nb-accent);
+  color: #0d0f16;
+  font-weight: 600;
+}
+
+.visual-timer__custom {
+  display: flex;
+  gap: 6px;
+}
+
+.visual-timer__custom input {
+  width: 90px;
+  background: var(--nb-surface);
+  border: var(--nb-border-style);
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.8em;
+  padding: 5px 8px;
+}
+
+.visual-timer__custom button {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.8em;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.visual-timer__controls {
+  display: flex;
+  gap: 8px;
+}
+
+.visual-timer__controls button {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 8px;
+  color: var(--nb-text);
+  font-size: 0.85em;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+.visual-timer__controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.visual-timer__btn--primary {
+  background: var(--nb-accent) !important;
+  color: #0d0f16 !important;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visual-timer__disk {
+    transition: none;
+  }
+}

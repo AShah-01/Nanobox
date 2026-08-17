@@ -8,6 +8,7 @@ import {
   WidgetInstance,
 } from "../storage/widgetInstances";
 import { isHidingOthers, subscribeFocusMode } from "../core/focusModeStore";
+import { CustomWidget } from "./built-in";
 import { DEFAULT_SIZE, WIDGET_LABELS, WIDGET_REGISTRY, WidgetId } from "./registry";
 import "./WidgetGrid.css";
 
@@ -57,6 +58,10 @@ export function WidgetGrid() {
   function setOpacity(id: number, opacity: number) {
     setInstances((prev) => prev.map((i) => (i.id === id ? { ...i, opacity } : i)));
     updateWidgetOpacity(id, opacity).catch((err) => console.error("failed to save opacity", err));
+  }
+
+  function onCustomWidgetSaved(id: number, settings: string) {
+    setInstances((prev) => prev.map((i) => (i.id === id ? { ...i, settings } : i)));
   }
 
   function startDrag(e: React.PointerEvent, instance: WidgetInstance) {
@@ -137,9 +142,10 @@ export function WidgetGrid() {
   return (
     <div className="widget-grid" ref={containerRef}>
       {instances.map((instance) => {
-        const Component = WIDGET_REGISTRY[instance.widget_type];
+        const isCustom = instance.widget_type === "custom";
+        const Component = isCustom ? null : WIDGET_REGISTRY[instance.widget_type as Exclude<WidgetId, "custom">];
         const isFocusMode = instance.widget_type === "focus-mode";
-        if (!Component) return null;
+        if (!isCustom && !Component) return null;
         return (
           <div
             key={instance.id}
@@ -178,7 +184,11 @@ export function WidgetGrid() {
             )}
 
             <div className="widget-grid__content">
-              <Component />
+              {isCustom ? (
+                <CustomWidget instance={instance} onSaved={(settings) => onCustomWidgetSaved(instance.id, settings)} />
+              ) : (
+                Component && <Component />
+              )}
             </div>
 
             <div className="widget-grid__resize" onPointerDown={(e) => startResize(e, instance)} />
@@ -192,7 +202,7 @@ export function WidgetGrid() {
         </button>
         {addMenuOpen && (
           <div className="widget-grid__add-menu">
-            {(Object.keys(WIDGET_REGISTRY) as WidgetId[]).map((id) => (
+            {(Object.keys(WIDGET_LABELS) as WidgetId[]).map((id) => (
               <button key={id} onClick={() => addWidget(id)}>
                 {WIDGET_LABELS[id]}
               </button>

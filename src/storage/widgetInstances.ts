@@ -9,6 +9,8 @@ export interface WidgetInstance {
   w: number;
   h: number;
   opacity: number;
+  /** Free-form per-instance JSON blob. Only the Custom Widget type uses this today (its html/css/js). */
+  settings: string | null;
 }
 
 interface WidgetInstanceRow extends Omit<WidgetInstance, "widget_type"> {
@@ -55,6 +57,11 @@ export async function updateWidgetLayout(id: number, layout: { x: number; y: num
 export async function updateWidgetOpacity(id: number, opacity: number): Promise<void> {
   const db = await getDb();
   await db.execute("UPDATE widget_instances SET opacity = $1 WHERE id = $2", [opacity, id]);
+}
+
+export async function updateWidgetSettings(id: number, settings: string): Promise<void> {
+  const db = await getDb();
+  await db.execute("UPDATE widget_instances SET settings = $1 WHERE id = $2", [settings, id]);
 }
 
 export async function deleteWidgetInstance(id: number): Promise<void> {

@@ -1,0 +1,98 @@
+.custom-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-widget__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.custom-widget__editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.72em;
+  font-weight: 600;
+  color: var(--nb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.custom-widget__editor textarea {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  font-size: 0.78em;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  background: var(--nb-surface);
+  border: var(--nb-border-style);
+  border-radius: 6px;
+  color: var(--nb-text);
+  padding: 6px 8px;
+  resize: vertical;
+}
+
+.custom-widget__hint {
+  margin: 0;
+  font-size: 0.7em;
+  color: var(--nb-text-muted);
+  line-height: 1.4;
+}
+
+.custom-widget__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.custom-widget__actions button {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.8em;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.custom-widget__save {
+  background: var(--nb-accent) !important;
+  color: #0d0f16 !important;
+  font-weight: 600;
+}
+
+.custom-widget__preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.custom-widget__frame {
+  flex: 1;
+  min-height: 80px;
+  width: 100%;
+  border: var(--nb-border-style);
+  border-radius: 8px;
+  background: #000;
+}
+
+.custom-widget__edit {
+  align-self: flex-end;
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: var(--nb-text-muted);
+  font-size: 0.72em;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.custom-widget__edit:hover {
+  border-color: var(--nb-accent);
+  color: var(--nb-accent);
+}

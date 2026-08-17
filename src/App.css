@@ -1,5 +1,12 @@
 .overlay {
-  position: relative;
   height: 100%;
-  padding: 24px 12px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.overlay__body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
 }

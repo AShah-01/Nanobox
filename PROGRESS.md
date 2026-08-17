@@ -420,3 +420,157 @@ is next" rather than hardcoding a milestone number, so it needed no change.
 Visual Timer, Today Timeline, Brain Dump, Task Breakdown, Mood Check-in,
 Gentle Reminders widgets (Companion widget if time allows). See
 [ROADMAP.md](ROADMAP.md).
+
+## Session 5 — 2026-08-17 — Milestone 4: everyday toolkit widgets [CEO-approved]
+
+**Milestone 4 core set: done** (6 of 7 — Companion widget cut, see below).
+Built on branch `milestone-4/adhd-toolkit`.
+
+### Storage: migration v4
+
+New tables in `src-tauri/src/lib.rs`: `timeline_blocks`, `brain_dump_entries`,
+`task_breakdowns` + `task_breakdown_steps`, `mood_logs` (unique per
+`log_date`, upserts on re-log), `reminders`. Typed CRUD wrappers in
+`src/storage/{timeline,brainDump,taskBreakdowns,moodLogs,reminders}.ts`,
+following the same pattern as Milestone 2's storage modules.
+
+### Widgets built
+
+- **Visual Timer** — Time Timer-style shrinking disk via a CSS
+  `conic-gradient` driven by a `--pct` custom property (no canvas/SVG
+  needed). Minute presets (5/10/15/25/45) + custom input. Reuses
+  `Alarm/tones.ts`'s `playTone` for the completion chime rather than
+  duplicating tone-synthesis code — that file was already a generic
+  Web-Audio utility, not Alarm-specific.
+- **Today Timeline** — manually-entered time blocks (icon, label, colour,
+  start/end), sorted by start time, current block highlighted by comparing
+  against the clock each minute. Chose a highlighted-list layout over a
+  literal pixel-positioned timeline strip — same "colour + icon at a
+  glance" value Tiimo has, far less rendering complexity, and it doesn't
+  break if blocks overlap or don't cover the full day.
+- **Brain Dump** — single input, Enter to save, reverse-chronological list.
+  Deliberately has no title/colour/pin — friction is the thing being
+  removed here, and Notes already covers the heavier case.
+- **Task Breakdown** — Goblin.tools' Magic ToDo without the AI call: title
+  a big/vague task, add checkbox steps underneath by hand, per-breakdown
+  progress count.
+- **Mood Check-in** — 5-emoji scale, tap logs today (upsert, so re-tapping
+  changes today's entry instead of duplicating), optional note, 7-day
+  history strip.
+- **Gentle Reminders** — interval-based (not clock-time) nudges. On
+  creation, immediately calls `markReminderFired` with the current
+  timestamp so the interval clock starts from creation rather than firing
+  right away. A 30s poll compares `last_fired_at` + `interval_minutes`
+  against now, fires an OS notification + `playTone("beep")`.
+- **Companion widget — cut this session.** Listed as a stretch goal
+  explicitly meant to be cut first if time ran short; the other six
+  widgets plus their storage layer, registry wiring, and verification
+  already matched Milestone 2's scope for one session. Left for a future
+  session — it's cosmetic-only and reads data that already exists
+  (`habits`/`habit_logs`), so it's cheap to pick up later without touching
+  anything built this session.
+
+### Registry
+
+`src/widgets/registry.ts` grew from 7 to 13 `WidgetId`s with matching
+`WIDGET_LABELS` and `DEFAULT_SIZE` entries; `src/widgets/built-in/index.ts`
+exports the six new components. No changes needed to `WidgetGrid.tsx`
+itself — the registry indirection from Milestone 2 meant new widgets are
+just data, not new grid code.
+
+### Also this session: Task Manager icon fix
+
+See the top of this session's work in the repo history — diagnosed as a
+stale local build (exe predated the logo-merge icon files), fixed by
+rebuilding. Full detail was written before this widget work started; see
+the "Task Manager icon bug" note above if this file gets reordered.
+
+### Build verification
+
+- `npx tsc --noEmit` — clean.
+- `cargo check` — clean, including migration v4.
+- `npm run test` — 3/3 passing (unchanged from Session 3).
+- `npm run tauri build -- --debug` — **succeeded** on Windows: produced
+  `nanobox.exe`, MSI, and NSIS installer.
+- Same standing limitation as every prior session: no interactive manual
+  QA in this environment (Nanobox isn't a registered app, so screen
+  automation can't target its window). Recommend a manual pass on the six
+  new widgets, particularly Gentle Reminders' interval scheduler and
+  Visual Timer's countdown-through-zero behaviour.
+
+### Known gaps / deliberately deferred
+
+- Companion widget not built (see above).
+- Today Timeline blocks are manual entry only — no calendar feed yet
+  (arrives with Milestone 5's Calendar widget).
+- Gentle Reminders and Visual Timer, like Alarm, only run while the app is
+  running — no OS-level scheduled task.
+- No tests added for the six new widgets (same gap flagged for Milestone 2
+  in session 2 — `WidgetGrid` and most built-in widgets still only have
+  `Clock`'s coverage).
+
+### Also this session, outside the Milestone 4 widget list (direct user request)
+
+**Title bar / window drag — real bug, fixed.** The user reported not being
+able to move the app on their desktop at all — no visible top bar, nothing
+to grab. Root cause: `src/components/WidgetFrame.css` had
+`-webkit-app-region: drag` on `.widget-frame`, which is the Electron-era
+mechanism and isn't reliably honoured by Tauri's WebView2 host on Windows —
+it never worked. Tauri's actual mechanism is the `data-tauri-drag-region`
+HTML attribute. Added `src/components/TitleBar.tsx` — a 32px bar with the
+Nanobox mark, wordmark, and a hide-to-tray button — using that attribute,
+rendered above `WidgetGrid` in `App.tsx`. Removed the dead
+`-webkit-app-region` rules from `WidgetFrame.css`. Verified conceptually
+against Tauri's documented behavior (interactive children of a
+drag-region element stay clickable); full interactive drag confirmation is
+part of the standing "no registered-app screen automation" gap noted every
+session — recommend the user confirm the window now drags from the new bar.
+
+**Custom Widget capability (MVP precursor to Milestone 6).** Requested
+directly: "so the devs who are also my audience can customise their own
+widget to have much more capabilities." Rather than build the full
+Milestone 6 block engine (React Flow canvas, typed ports, block library —
+a multi-week feature on its own) in the middle of a widget-milestone
+session, shipped a smaller real capability now:
+
+- `src/widgets/built-in/CustomWidget/CustomWidget.tsx` — an editor (HTML/
+  CSS/JS textareas) and a live preview `<iframe sandbox="allow-scripts">`
+  with **no** `allow-same-origin`. That combination gives the frame an
+  opaque origin: its JS cannot reach `window.parent`, Nanobox's SQLite
+  data, or any Tauri API, because there's no origin match and no injected
+  `__TAURI__` bridge in the iframe's document. That's a real, meaningful
+  boundary, not security theatre.
+- Honest limitation, documented in-widget and here: this sandbox does
+  **not** block outbound network calls (`fetch`/`XMLHttpRequest`) from the
+  widget's own JS — only isolation from the host app. The Milestone 6 design
+  (Compartment/ShadowRealm + whitelisted bridge API) is the version that
+  closes that gap; this is explicitly a narrower precursor, not a
+  replacement.
+- Storage: reused `widget_instances.settings` (added in Milestone 2's
+  schema, unused until now) rather than a new table — it's a per-instance
+  JSON blob, `{html, css, js}`, which is exactly what that column was for.
+  Added `updateWidgetSettings` to `src/storage/widgetInstances.ts`.
+- `WidgetGrid.tsx` special-cases `widget_type === "custom"` to render
+  `<CustomWidget instance={...} />` instead of the normal no-props
+  registry lookup, since this is the one widget type that needs its own
+  instance data. `WIDGET_REGISTRY`'s type now excludes `"custom"`
+  (`Record<Exclude<WidgetId, "custom">, ComponentType>`) to keep that
+  honest at the type level; the add-widget menu was switched from
+  iterating `WIDGET_REGISTRY` to iterating `WIDGET_LABELS` so Custom
+  Widget still shows up there.
+- README's Contributing section rewritten (was: "not open for external
+  contributions" — no longer true) to actually invite collaborators, and
+  points to this feature as a concrete on-ramp.
+
+### Build verification (this session, full)
+
+- `npx tsc --noEmit` — clean, including the title bar SVG import and the
+  registry's `Exclude<WidgetId, "custom">` typing.
+- `npm run test` — 3/3 passing.
+- `npm run tauri build -- --debug` — succeeded on Windows (see repo history
+  for exact timing; same MSI/NSIS output pattern as every prior session).
+
+### Next up (Milestone 5)
+
+Calendar (Google/iCal) and Music (Spotify/Apple Music/YouTube)
+integrations. See [ROADMAP.md](ROADMAP.md).

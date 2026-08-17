@@ -7,7 +7,7 @@
 > calendar, alarms, clocks, shortcuts, and a lego-block custom widget builder,
 > all in one persistent, themeable desktop hub.
 
-**Status:** Pre-release, active development (Milestone 3 — theme engine — in progress).
+**Status:** Pre-release, active development (Milestone 4 — everyday ADHD/neurodivergent toolkit widgets — in progress).
 
 ---
 
@@ -111,11 +111,27 @@ npm run tauri build
 - [PROGRESS.md](PROGRESS.md) — session-by-session log of what's shipped
 - [PLAN.md](PLAN.md) — current focus and working agreement
 
-## Contributing / security
+## Contributing
 
-This project isn't yet open for external contributions. If you find a
-security issue, please follow [SECURITY.md](SECURITY.md) rather than filing
-a public issue.
+Nanobox is open to collaborators — if you're a dev who cares about
+neurodivergent-friendly tooling (or you just like the idea of a themeable
+desktop widget hub), issues and PRs are genuinely welcome. It's early and
+the codebase moves fast, so an issue proposing what you'd like to work on
+before a big PR will save both of us time.
+
+**Want to extend Nanobox without touching the core?** The Custom Widget
+type (add it from the overlay's "+ Add widget" menu) lets you write your
+own HTML/CSS/JS and drop it straight onto the desktop — it runs sandboxed
+in an iframe with no access to your files, Nanobox's data, or Tauri APIs.
+It's a simple precursor to the full visual "lego block" widget builder
+planned for Milestone 6 (see [ROADMAP.md](ROADMAP.md)) — capable enough to
+build something real today, and a good on-ramp if you want to help shape
+where the full block engine goes.
+
+## Security
+
+If you find a security issue, please follow [SECURITY.md](SECURITY.md)
+rather than filing a public issue.
 
 ## License
 
