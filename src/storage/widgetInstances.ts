@@ -11,6 +11,8 @@ export interface WidgetInstance {
   opacity: number;
   /** Free-form per-instance JSON blob. Only the Custom Widget type uses this today (its html/css/js). */
   settings: string | null;
+  /** JSON: { color?: string; borderStyle?: BorderStyleId } — per-instance appearance override, any widget type. */
+  style_settings: string | null;
 }
 
 interface WidgetInstanceRow extends Omit<WidgetInstance, "widget_type"> {
@@ -62,6 +64,11 @@ export async function updateWidgetOpacity(id: number, opacity: number): Promise<
 export async function updateWidgetSettings(id: number, settings: string): Promise<void> {
   const db = await getDb();
   await db.execute("UPDATE widget_instances SET settings = $1 WHERE id = $2", [settings, id]);
+}
+
+export async function updateWidgetStyle(id: number, styleSettings: string | null): Promise<void> {
+  const db = await getDb();
+  await db.execute("UPDATE widget_instances SET style_settings = $1 WHERE id = $2", [styleSettings, id]);
 }
 
 export async function deleteWidgetInstance(id: number): Promise<void> {

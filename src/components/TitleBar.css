@@ -24,19 +24,33 @@
   border-radius: 3px;
 }
 
-.title-bar__hide {
+.title-bar__controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.title-bar__btn {
   background: none;
   border: none;
   color: var(--nb-text-muted);
-  width: 24px;
+  width: 26px;
   height: 24px;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 0.9em;
+  font-size: 0.85em;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.title-bar__hide:hover {
+.title-bar__btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--nb-text);
+}
+
+.title-bar__btn--close:hover {
+  background: #e5484d;
+  color: #fff;
 }

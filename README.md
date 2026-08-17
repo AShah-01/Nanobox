@@ -7,7 +7,7 @@
 > calendar, alarms, clocks, shortcuts, and a lego-block custom widget builder,
 > all in one persistent, themeable desktop hub.
 
-**Status:** Pre-release, active development (Milestone 5 — Calendar + Music integrations — local-first foundation done, OAuth completion pending credentials; see [ROADMAP.md](ROADMAP.md)).
+**Status:** Pre-release, active development (Milestone 6 — window chrome & widget UX fixes; see [ROADMAP.md](ROADMAP.md)).
 
 ---
 
@@ -99,6 +99,16 @@ npm install
 npm run tauri dev
 ```
 
+This is a **dev server** — it's meant to stay attached to the terminal you
+launched it from (that's what makes hot-reload work), and closing that
+terminal closes the app. That's normal, not a bug. If you want Nanobox to
+behave like a normal installed app — sitting in the taskbar/tray,
+surviving after you close whatever launched it — build and run the real
+app instead: `npm run tauri build`, then run the installer it produces (or
+double-click the built `.exe`/`.app` directly, not from inside a terminal).
+See "Grab a build" below for a version you don't even have to build
+yourself.
+
 ### Build
 
 ```bash
@@ -116,7 +126,7 @@ at the bottom of the page.
 
 These are unsigned **debug** builds (larger, unoptimized, no code signing/
 notarization) meant for trying Nanobox out or testing a PR, not a polished
-release — signed, optimized installers are Milestone 7 (Polish & release)
+release — signed, optimized installers are Milestone 8 (Polish & release)
 work, not done yet.
 
 ## Roadmap & progress
@@ -138,9 +148,10 @@ type (add it from the overlay's "+ Add widget" menu) lets you write your
 own HTML/CSS/JS and drop it straight onto the desktop — it runs sandboxed
 in an iframe with no access to your files, Nanobox's data, or Tauri APIs.
 It's a simple precursor to the full visual "lego block" widget builder
-planned for Milestone 6 (see [ROADMAP.md](ROADMAP.md)) — capable enough to
+planned for Milestone 7 (see [ROADMAP.md](ROADMAP.md)) — capable enough to
 build something real today, and a good on-ramp if you want to help shape
-where the full block engine goes.
+where the full block engine goes. Each one you save also lands as a real
+file in your `custom-widgets` app-data folder, not just in the database.
 
 ## Security
 

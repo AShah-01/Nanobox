@@ -162,12 +162,58 @@ fn migrations() -> Vec<Migration> {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "milestone_6_widget_style_settings",
+            sql: "ALTER TABLE widget_instances ADD COLUMN style_settings TEXT;",
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
 #[tauri::command]
 fn read_text_file(path: String) -> Result<String, String> {
     std::fs::read_to_string(path).map_err(|e| e.to_string())
+}
+
+fn custom_widgets_dir_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("custom-widgets");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
+}
+
+/// Where Custom Widget code gets saved as standalone `.nanowidget.json` files
+/// (in addition to the SQLite copy every widget instance already has) — a
+/// dedicated, browsable folder, not buried in the app's database. Created on
+/// first use if it doesn't exist yet. Exposed to the frontend so it can show
+/// the user where their widgets live; actual writes go through
+/// `save_custom_widget_file` below, not a generic write command.
+#[tauri::command]
+fn custom_widgets_dir(app: tauri::AppHandle) -> Result<String, String> {
+    Ok(custom_widgets_dir_path(&app)?.to_string_lossy().to_string())
+}
+
+/// Writes a `.nanowidget.json` export. Deliberately narrower than a generic
+/// "write any path" command: `filename` is sanitized (no path separators or
+/// `..`) and the result is always confined to `custom_widgets_dir`, so this
+/// can only ever touch files in that one folder, regardless of what the
+/// frontend passes.
+#[tauri::command]
+fn save_custom_widget_file(app: tauri::AppHandle, filename: String, contents: String) -> Result<String, String> {
+    let safe_name: String = filename
+        .chars()
+        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' || c == '.' { c } else { '-' })
+        .collect();
+    if safe_name.is_empty() || safe_name.contains("..") {
+        return Err("invalid filename".to_string());
+    }
+    let path = custom_widgets_dir_path(&app)?.join(safe_name);
+    std::fs::write(&path, contents).map_err(|e| e.to_string())?;
+    Ok(path.to_string_lossy().to_string())
 }
 
 /// Thin wrapper over the OS keychain (Windows Credential Manager / macOS
@@ -235,6 +281,8 @@ pub fn run() {
         )
         .invoke_handler(tauri::generate_handler![
             read_text_file,
+            save_custom_widget_file,
+            custom_widgets_dir,
             secure_set,
             secure_get,
             secure_delete

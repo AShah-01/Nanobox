@@ -21,7 +21,8 @@
   letter-spacing: 0.04em;
 }
 
-.custom-widget__editor textarea {
+.custom-widget__editor textarea,
+.custom-widget__editor input[type="text"] {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
   font-size: 0.78em;
   font-weight: 400;
@@ -79,6 +80,18 @@
   border: var(--nb-border-style);
   border-radius: 8px;
   background: #000;
+}
+
+.custom-widget__preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.custom-widget__saved-note {
+  font-size: 0.68em;
+  color: var(--nb-text-muted);
 }
 
 .custom-widget__edit {
