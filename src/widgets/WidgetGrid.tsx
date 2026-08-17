@@ -1,20 +1,63 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, CSSProperties } from "react";
 import {
   createWidgetInstance,
   deleteWidgetInstance,
   listWidgetInstances,
   updateWidgetLayout,
   updateWidgetOpacity,
+  updateWidgetStyle,
   WidgetInstance,
 } from "../storage/widgetInstances";
 import { isHidingOthers, subscribeFocusMode } from "../core/focusModeStore";
+import { deriveShades } from "../core/colorShades";
+import { BORDER_STYLE_LABELS, BORDER_STYLES, borderStyleCss, BorderStyleId } from "../core/widgetBorderStyles";
 import { CustomWidget } from "./built-in";
+import { WidgetChromeContext } from "./WidgetChromeContext";
 import { DEFAULT_SIZE, WIDGET_LABELS, WIDGET_REGISTRY, WidgetId } from "./registry";
 import "./WidgetGrid.css";
 
 const GRID_SNAP = 8;
 const MIN_SIZE = 160;
 const snap = (n: number) => Math.round(n / GRID_SNAP) * GRID_SNAP;
+
+interface WidgetStyleSettings {
+  color?: string;
+  borderStyle?: BorderStyleId;
+}
+
+function parseStyleSettings(raw: string | null): WidgetStyleSettings {
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+function cellStyle(instance: WidgetInstance): CSSProperties {
+  const style: CSSProperties = {
+    left: instance.x,
+    top: instance.y,
+    width: instance.w,
+    height: instance.h,
+    opacity: instance.opacity,
+  };
+  const { color, borderStyle } = parseStyleSettings(instance.style_settings);
+  if (color) {
+    const shades = deriveShades(color);
+    Object.assign(style, {
+      "--nb-accent": shades.accent,
+      "--nb-accent-text": shades.accentText,
+      "--nb-surface-alt": shades.surfaceAlt,
+    });
+  }
+  if (borderStyle) {
+    const accent = color ? deriveShades(color).accent : "var(--nb-accent)";
+    const css = borderStyleCss(borderStyle, accent);
+    Object.assign(style, { "--nb-widget-border": css.border, "--nb-widget-shadow": css.boxShadow });
+  }
+  return style;
+}
 
 export function WidgetGrid() {
   const [instances, setInstances] = useState<WidgetInstance[]>([]);
@@ -58,6 +101,12 @@ export function WidgetGrid() {
   function setOpacity(id: number, opacity: number) {
     setInstances((prev) => prev.map((i) => (i.id === id ? { ...i, opacity } : i)));
     updateWidgetOpacity(id, opacity).catch((err) => console.error("failed to save opacity", err));
+  }
+
+  function setStyle(instance: WidgetInstance, next: WidgetStyleSettings) {
+    const json = Object.keys(next).length > 0 ? JSON.stringify(next) : null;
+    setInstances((prev) => prev.map((i) => (i.id === instance.id ? { ...i, style_settings: json } : i)));
+    updateWidgetStyle(instance.id, json).catch((err) => console.error("failed to save widget style", err));
   }
 
   function onCustomWidgetSaved(id: number, settings: string) {
@@ -146,24 +195,14 @@ export function WidgetGrid() {
         const Component = isCustom ? null : WIDGET_REGISTRY[instance.widget_type as Exclude<WidgetId, "custom">];
         const isFocusMode = instance.widget_type === "focus-mode";
         if (!isCustom && !Component) return null;
+        const style = parseStyleSettings(instance.style_settings);
+
         return (
           <div
             key={instance.id}
             className={`widget-grid__cell ${hideOthers && !isFocusMode ? "is-dimmed" : ""}`}
-            style={{ left: instance.x, top: instance.y, width: instance.w, height: instance.h, opacity: instance.opacity }}
+            style={cellStyle(instance)}
           >
-            <div className="widget-grid__chrome" onPointerDown={(e) => startDrag(e, instance)}>
-              <span className="widget-grid__grip">⠿</span>
-              <button
-                className="widget-grid__gear"
-                data-no-drag
-                onClick={() => setOpenPopoverId(openPopoverId === instance.id ? null : instance.id)}
-                aria-label="Widget settings"
-              >
-                ⚙
-              </button>
-            </div>
-
             {openPopoverId === instance.id && (
               <div className="widget-grid__popover" data-no-drag>
                 <label>
@@ -177,19 +216,60 @@ export function WidgetGrid() {
                     onChange={(e) => setOpacity(instance.id, Number(e.target.value))}
                   />
                 </label>
-                <button className="widget-grid__remove" onClick={() => removeWidget(instance.id)}>
-                  Remove widget
-                </button>
+
+                <label>
+                  Colour
+                  <div className="widget-grid__color-row">
+                    <input
+                      type="color"
+                      value={style.color ?? "#7c9cff"}
+                      onChange={(e) => setStyle(instance, { ...style, color: e.target.value })}
+                    />
+                    {style.color && (
+                      <button className="widget-grid__color-reset" onClick={() => setStyle(instance, { ...style, color: undefined })}>
+                        Reset to theme
+                      </button>
+                    )}
+                  </div>
+                </label>
+
+                <label>
+                  Style
+                  <select
+                    value={style.borderStyle ?? ""}
+                    onChange={(e) =>
+                      setStyle(instance, {
+                        ...style,
+                        borderStyle: (e.target.value || undefined) as BorderStyleId | undefined,
+                      })
+                    }
+                  >
+                    <option value="">Theme default</option>
+                    {BORDER_STYLES.map((id) => (
+                      <option key={id} value={id}>
+                        {BORDER_STYLE_LABELS[id]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
             )}
 
-            <div className="widget-grid__content">
-              {isCustom ? (
-                <CustomWidget instance={instance} onSaved={(settings) => onCustomWidgetSaved(instance.id, settings)} />
-              ) : (
-                Component && <Component />
-              )}
-            </div>
+            <WidgetChromeContext.Provider
+              value={{
+                onDragStart: (e) => startDrag(e, instance),
+                onOpenSettings: () => setOpenPopoverId(openPopoverId === instance.id ? null : instance.id),
+                onClose: () => removeWidget(instance.id),
+              }}
+            >
+              <div className="widget-grid__content">
+                {isCustom ? (
+                  <CustomWidget instance={instance} onSaved={(settings) => onCustomWidgetSaved(instance.id, settings)} />
+                ) : (
+                  Component && <Component />
+                )}
+              </div>
+            </WidgetChromeContext.Provider>
 
             <div className="widget-grid__resize" onPointerDown={(e) => startResize(e, instance)} />
           </div>

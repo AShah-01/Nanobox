@@ -162,12 +162,42 @@ fn migrations() -> Vec<Migration> {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "milestone_6_widget_style_settings",
+            sql: "ALTER TABLE widget_instances ADD COLUMN style_settings TEXT;",
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
 #[tauri::command]
 fn read_text_file(path: String) -> Result<String, String> {
     std::fs::read_to_string(path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn write_text_file(path: String, contents: String) -> Result<(), String> {
+    let path = std::path::Path::new(&path);
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(path, contents).map_err(|e| e.to_string())
+}
+
+/// Where Custom Widget code gets saved as standalone `.nanowidget.json` files
+/// (in addition to the SQLite copy every widget instance already has) — a
+/// dedicated, browsable folder, not buried in the app's database. Created on
+/// first use if it doesn't exist yet.
+#[tauri::command]
+fn custom_widgets_dir(app: tauri::AppHandle) -> Result<String, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("custom-widgets");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir.to_string_lossy().to_string())
 }
 
 /// Thin wrapper over the OS keychain (Windows Credential Manager / macOS
@@ -235,6 +265,8 @@ pub fn run() {
         )
         .invoke_handler(tauri::generate_handler![
             read_text_file,
+            write_text_file,
+            custom_widgets_dir,
             secure_set,
             secure_get,
             secure_delete

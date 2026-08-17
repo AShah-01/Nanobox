@@ -746,3 +746,125 @@ over:
   updated after a PR merges, not when work starts, so there's no signal
   that a milestone is already "claimed." Not fixed this session — flagging
   it here so it doesn't happen invisibly again.
+
+## Session 7 — 2026-08-17 — Milestone 6: window chrome & widget UX fixes [CEO-approved]
+
+Direct bug report after actually living with the app for a bit, not
+theoretical: the window couldn't be controlled or moved properly, it never
+showed up in the taskbar, and the widget-grid chrome (a separate floating
+"6-dot" strip above each widget) didn't match how the user wanted to
+interact with it. All root-caused before touching code, not just patched
+on the surface:
+
+### Root causes found
+
+- **No taskbar presence**: `tauri.conf.json` had `"skipTaskbar": true` —
+  the window was deliberately hidden from the taskbar since Milestone 1's
+  "desktop overlay" design. Direct contradiction with "an app that sits in
+  your taskbar." Changed to `false`.
+- **Dragging (added Milestone 4) probably never actually worked**: the
+  title bar used the passive `data-tauri-drag-region` attribute, which
+  this app's `dragDropEnabled` webview setting (needed for App Shortcuts'
+  OS file-drop feature) likely intercepts before Tauri's own drag-region
+  listener fires — both hook into the same mouse-gesture capture. Could
+  never fully confirm this diagnosis empirically (no way to click-test a
+  real window in this environment, noted every session), so rather than
+  guess-and-hope, switched to the more robust, standard pattern for a
+  custom title bar with buttons: an explicit `win.startDragging()` call on
+  `pointerdown`, which is the same underlying Window API Tauri's own
+  passive attribute uses internally, just invoked directly instead of
+  relying on passive attribute-scanning.
+- **Terminal-tied lifecycle**: not a code bug. `npm run tauri dev` is a
+  dev server, correctly tied to its terminal (that's what makes hot-reload
+  work) — `main.rs`'s `windows_subsystem` directive is already correct
+  Tauri boilerplate (console only in debug builds, by design). The
+  standalone taskbar/tray experience the user wants already exists via
+  `npm run tauri build` + the installer — just never surfaced clearly.
+  Documented in README instead of "fixing" something that wasn't broken.
+
+### Window chrome
+
+- `TitleBar.tsx` rebuilt: real minimize (`win.minimize()`), maximize/
+  restore (`win.toggleMaximize()`, icon reflects state via `onResized`),
+  and close. Close hides to tray rather than quitting — kept consistent
+  with the existing `CloseRequested` handler from Milestone 1 (tray menu
+  is still the only real quit path) rather than introducing a second,
+  different "close" behavior; the button's tooltip says so explicitly so
+  it isn't a surprise.
+
+### Widget grid chrome — removed the floating strip, moved everything onto the widget itself
+
+- Deleted `WidgetGrid`'s separate hover-revealed `.widget-grid__chrome`
+  (the 6-dot grip + gear floating above each cell).
+- New `src/widgets/WidgetChromeContext.tsx`: a small React context carrying
+  `{ onDragStart, onOpenSettings, onClose }` per cell. `WidgetGrid`
+  provides it once per widget instance; `WidgetFrame` (used by all 14
+  built-in/custom widgets) reads it and, when present, makes its own title
+  bar the drag handle and renders ⚙/× buttons directly on it. Chosen over
+  threading drag/close/settings callbacks as props through all 14 widget
+  files — only `WidgetFrame.tsx` and `WidgetGrid.tsx` needed changes.
+- Settings popover repositioned to hang from the top-right of the cell
+  (was anchored to the now-deleted floating chrome above it) and dropped
+  the redundant "Remove widget" button now that × does that directly.
+
+### Per-widget Color + Style settings
+
+- Migration v6: `widget_instances.style_settings` (JSON: `{ color?,
+  borderStyle? }`), separate from the existing `settings` column (which
+  Custom Widget already owns for its code/title) to avoid the two features
+  colliding on one blob.
+- `src/core/colorShades.ts`: given one hex colour, derives an accent
+  (the colour itself), a contrast-appropriate accent-text colour, and a
+  dark desaturated surface tint of the same hue — "the selected colour
+  becomes the primary colour, and a shade of it," applied as `--nb-accent`/
+  `--nb-accent-text`/`--nb-surface-alt` overrides on just that widget's
+  cell (cascades through `WidgetFrame` and the widget's own content for
+  free, since everything already reads those custom properties).
+- `src/core/widgetBorderStyles.ts`: none/hairline/thick/engraved presets
+  per `PRODUCT_SPEC.md`'s existing theme-engine vocabulary, now available
+  per-widget-instance too, not just per-theme.
+- Settings popover: Opacity (existing) + Colour (native colour input +
+  reset-to-theme) + Style (border preset select).
+
+### Custom Widget: title + real file storage
+
+- Added a Title field to the editor; `WidgetFrame`'s title is now the
+  widget's own name instead of the hardcoded "Custom Widget."
+- New Rust commands `custom_widgets_dir` (creates/returns
+  `{app_data_dir}/custom-widgets`) and `write_text_file`. Saving a Custom
+  Widget now also writes a `<slugified-title>-<id>.nanowidget.json` copy
+  there — SQLite stays the runtime source of truth; the file is a real,
+  browsable, portable export, not a second thing the app has to keep in
+  sync.
+
+### Build verification
+
+- `npx tsc --noEmit` — clean, including the `CSSProperties` custom-property
+  assignment in `WidgetGrid.tsx`'s `cellStyle()` and every guessed Tauri
+  Window API method (`startDragging`, `minimize`, `toggleMaximize`,
+  `isMaximized`, `onResized`).
+- `cargo check` — clean, including `app.path().app_data_dir()`.
+- `npm run test` — 3/3 passing (unchanged — `Clock`/`ThemeSwitcher` render
+  fine with `WidgetChromeContext` absent, same as before it existed).
+- Standing gap, same as every session: no way to click-test real window
+  dragging/minimize/maximize in this environment. The `startDragging()`
+  switch is the most defensible fix available, but treat it as
+  "should work, please confirm" rather than "verified working."
+
+### Known gaps / deliberately deferred
+
+- Colour-blindness simulation, per-theme customisation UI (Milestone 3),
+  Companion widget (Milestone 4 stretch), and all OAuth completion
+  (Milestone 5) are all still open — unticked boxes in `ROADMAP.md` are
+  real backlog, not forgotten.
+- Border-style "engraved" preset is a simple inset-shadow approximation,
+  not a true bevelled/carved render.
+- No tests added for the new context/settings/file-storage code (same
+  standing gap flagged every session).
+
+### Next up
+
+Either continue clearing Milestone 6's remaining checkbox items if the
+window-chrome fixes need a second pass after real-world confirmation, or
+move to whichever of Milestone 3 (per-theme customisation)/4 (Companion
+widget)/5 (OAuth) the user prioritises next. See [ROADMAP.md](ROADMAP.md).

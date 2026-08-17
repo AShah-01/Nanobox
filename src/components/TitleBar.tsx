@@ -1,29 +1,74 @@
+import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import logoMark from "../assets/logo/nanobox-mark.svg";
 import "./TitleBar.css";
 
+const win = getCurrentWindow();
+
 /**
- * Custom drag handle for the borderless overlay window. Tauri has no native
- * title bar to grab (decorations: false, by design, for the transparent
- * widget-canvas look) — without this, the window can never be repositioned.
- * `data-tauri-drag-region` makes the bar itself draggable while leaving
- * nested interactive elements (the hide button) clickable as normal.
+ * Custom drag handle + window controls for the borderless overlay window
+ * (decorations: false, by design, for the transparent widget-canvas look —
+ * Tauri gives no native title bar to grab or click for a window like this).
+ *
+ * Dragging uses an explicit `startDragging()` call on pointerdown rather
+ * than the passive `data-tauri-drag-region` attribute: this app also uses
+ * `dragDropEnabled` (the webview's own OS file-drop handling, needed by the
+ * App Shortcuts widget), which can intercept the same mouse gesture the
+ * passive attribute relies on. Calling the window API directly is the more
+ * robust pattern Tauri's own custom-title-bar examples use, especially once
+ * the bar also has buttons that must NOT start a drag.
  */
 export function TitleBar() {
+  const [maximized, setMaximized] = useState(false);
+
+  useEffect(() => {
+    win.isMaximized().then(setMaximized);
+    const unlisten = win.onResized(() => {
+      win.isMaximized().then(setMaximized);
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
+
+  function startDrag(e: React.PointerEvent) {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest("[data-no-drag]")) return;
+    win.startDragging().catch((err) => console.error("failed to start window drag", err));
+  }
+
   return (
-    <header className="title-bar" data-tauri-drag-region>
-      <div className="title-bar__brand" data-tauri-drag-region>
+    <header className="title-bar" onPointerDown={startDrag}>
+      <div className="title-bar__brand">
         <img src={logoMark} alt="" width="16" height="16" />
         <span>Nanobox</span>
       </div>
-      <button
-        className="title-bar__hide"
-        onClick={() => getCurrentWindow().hide().catch((err) => console.error("failed to hide window", err))}
-        aria-label="Hide Nanobox"
-        title="Hide (tray icon shows it again)"
-      >
-        —
-      </button>
+      <div className="title-bar__controls" data-no-drag>
+        <button
+          className="title-bar__btn"
+          onClick={() => win.minimize().catch((err) => console.error("failed to minimize window", err))}
+          aria-label="Minimize"
+          title="Minimize to taskbar"
+        >
+          &#8211;
+        </button>
+        <button
+          className="title-bar__btn"
+          onClick={() => win.toggleMaximize().catch((err) => console.error("failed to toggle maximize", err))}
+          aria-label={maximized ? "Restore" : "Maximize"}
+          title={maximized ? "Restore" : "Maximize"}
+        >
+          {maximized ? "❐" : "☐"}
+        </button>
+        <button
+          className="title-bar__btn title-bar__btn--close"
+          onClick={() => win.hide().catch((err) => console.error("failed to hide window", err))}
+          aria-label="Close"
+          title="Close (hides to tray — use the tray icon's Quit to actually exit)"
+        >
+          &#215;
+        </button>
+      </div>
     </header>
   );
 }

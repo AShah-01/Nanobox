@@ -116,7 +116,48 @@ and what's still gated on credentials.
 - [x] Graceful degradation: every integration shows a clear "not connected"
       state rather than failing or showing stale/fake data
 
-## Milestone 6 — Lego block widget builder
+## Milestone 6 — Window chrome & widget UX fixes ✅ (pending real-world drag confirmation)
+
+Direct user bug report after using the app for real: several things from
+Milestones 1/2/4 didn't actually work as intended once someone tried to
+live with it day to day. Pushes the former Milestone 6/7 (Lego block
+builder, Polish & release) down to 7/8.
+
+- [x] Window has no minimize/maximize/close controls — only a single
+      "hide" button existed
+- [x] Window dragging (added Milestone 4) doesn't reliably work in
+      practice — likely conflicts with `dragDropEnabled` (needed for App
+      Shortcuts' file drop), which intercepts the same mouse gesture the
+      passive `data-tauri-drag-region` attribute relies on; switched to
+      the explicit `startDragging()` API on the title bar. Compiles and
+      type-checks; **not yet confirmed fixed by an actual human dragging
+      the window** — no way to click-test that in this environment. Please
+      confirm after this ships.
+- [x] `skipTaskbar: true` means the app never appears in the taskbar at
+      all, contradicting "an app that sits in your taskbar" — cleared
+- [x] Clarified (docs, not a code bug): `npm run tauri dev` is inherently
+      tied to its terminal by design (it's a dev server) — the persistent,
+      terminal-independent, tray/taskbar experience already exists via the
+      built installer (now downloadable from CI, see README)
+- [x] Custom Widget: no title field, code only lives in SQLite — added a
+      title input and each widget now also saves as a `.nanowidget.json`
+      file in a dedicated app-data folder, not just the database
+- [x] WidgetGrid's floating "6-dot" drag handle removed — dragging now
+      happens by grabbing the widget's own visible title bar; a close (×)
+      and settings (⚙) button live on that same bar
+- [x] Per-widget settings expand beyond Opacity to include Color (pick one
+      colour, the widget derives a shade palette from it — that colour
+      becomes the widget's accent) and Style (border presets: none /
+      hairline / thick / engraved, per `PRODUCT_SPEC.md`'s theme-engine
+      vocabulary, now available per-widget-instance too)
+
+See [PROGRESS.md](PROGRESS.md) session 7 for root-cause detail on the
+drag/taskbar bugs and what's still unverified.
+
+See PROGRESS.md for the session this shipped in, including root-cause
+notes for the drag/taskbar bugs.
+
+## Milestone 7 — Lego block widget builder
 
 An MVP precursor already exists: the Custom Widget type (added Milestone 4,
 see PROGRESS.md session 5) lets developers drop sandboxed HTML/CSS/JS
@@ -135,7 +176,7 @@ milestone replaces it with the actual designed system:
 - Widget export/import as `.nanowidget` (JSON schema + base64 block code)
 - Block widget renderer: run a block program as a live desktop widget
 
-## Milestone 7 — Polish & release
+## Milestone 8 — Polish & release
 
 - First-run onboarding wizard: theme picker, accent colour, add first widget
 - Full keyboard navigation across all widgets and settings
