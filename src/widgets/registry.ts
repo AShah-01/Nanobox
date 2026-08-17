@@ -3,12 +3,14 @@ import {
   Alarm,
   AppShortcuts,
   BrainDump,
+  Calendar,
   Clock,
   Countdown,
   FocusMode,
   GentleReminders,
   HabitTracker,
   MoodCheckIn,
+  Music,
   Notes,
   TaskBreakdown,
   TodayTimeline,
@@ -29,6 +31,8 @@ export type WidgetId =
   | "task-breakdown"
   | "mood-check-in"
   | "gentle-reminders"
+  | "calendar"
+  | "music"
   | "custom";
 
 /**
@@ -52,6 +56,8 @@ export const WIDGET_REGISTRY: Record<Exclude<WidgetId, "custom">, ComponentType>
   "task-breakdown": TaskBreakdown,
   "mood-check-in": MoodCheckIn,
   "gentle-reminders": GentleReminders,
+  calendar: Calendar,
+  music: Music,
 };
 
 export const WIDGET_LABELS: Record<WidgetId, string> = {
@@ -68,6 +74,8 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   "task-breakdown": "Task Breakdown",
   "mood-check-in": "Mood Check-in",
   "gentle-reminders": "Gentle Reminders",
+  calendar: "Calendar",
+  music: "Music",
   custom: "Custom Widget (developer)",
 };
 
@@ -85,5 +93,7 @@ export const DEFAULT_SIZE: Record<WidgetId, { w: number; h: number }> = {
   "task-breakdown": { w: 280, h: 320 },
   "mood-check-in": { w: 260, h: 220 },
   "gentle-reminders": { w: 260, h: 280 },
+  calendar: { w: 380, h: 380 },
+  music: { w: 280, h: 220 },
   custom: { w: 300, h: 280 },
 };

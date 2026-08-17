@@ -7,7 +7,7 @@
 > calendar, alarms, clocks, shortcuts, and a lego-block custom widget builder,
 > all in one persistent, themeable desktop hub.
 
-**Status:** Pre-release, active development (Milestone 4 — everyday ADHD/neurodivergent toolkit widgets — in progress).
+**Status:** Pre-release, active development (Milestone 5 — integrations — in progress).
 
 ---
 

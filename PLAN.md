@@ -7,12 +7,14 @@ For a session-by-session log of what's been built, see [PROGRESS.md](PROGRESS.md
 
 ## Current focus
 
-**Milestone 4 — Everyday ADHD/neurodivergent toolkit widgets.** Milestones
-1–3 (foundation shell, core widgets, theme engine) are done. Milestone 4 adds
-a second wave of widgets researched from what ADHD/neurodivergent people
-actually use daily (Tiimo, Time Timer, Goblin.tools, Finch, Sprout),
-simplified to fit Nanobox's local-first, no-account shape. See
-[ROADMAP.md](ROADMAP.md) for the widget list and what got deliberately cut.
+**Milestone 5 — Integrations.** Milestones 1–4 (foundation shell, core
+widgets, theme engine, everyday toolkit widgets) are done. Milestone 5 adds
+the Calendar widget (local `.ics` + Google Calendar) and Music widget
+(unified now-playing across streaming services), backed by a new OS-keychain
+secure token store. Spotify is the one music provider actually wired up this
+session — Apple Music, YouTube Music, and YouTube each have a real,
+documented blocker rather than a half-working integration. See
+[ROADMAP.md](ROADMAP.md) for what's done vs. deferred.
 
 ## Working agreement
 
@@ -34,7 +36,7 @@ See [ROADMAP.md](ROADMAP.md) for the full breakdown. Short version:
 1. **Foundation shell** — scaffold, tray, overlay window, autostart, SQLite, Clock widget ✅
 2. **Core widgets** — Notes, Alarm, App Shortcuts, Countdown, Habit Tracker, Focus mode ✅
 3. **Theme engine** — all six themes, token pipeline, accessibility baseline ✅ (per-theme customisation + colour-blindness checks still open)
-4. **Everyday toolkit widgets** — Visual Timer, Today Timeline, Brain Dump, Task Breakdown, Mood Check-in, Gentle Reminders, (stretch) Companion — in progress
-5. **Integrations** — Calendar (Google/iCal) and Music (Spotify/Apple Music/YouTube)
+4. **Everyday toolkit widgets** — Visual Timer, Today Timeline, Brain Dump, Task Breakdown, Mood Check-in, Gentle Reminders, (stretch) Companion — core set done, Companion still open
+5. **Integrations** — Calendar (Google/iCal) done, Music done for Spotify only (Apple Music/YouTube Music/YouTube blocked, see ROADMAP.md) — in progress
 6. **Lego block widget builder** — visual programming canvas + sandboxed custom blocks
 7. **Polish & release** — packaging (MSIX/DMG), onboarding, docs site, public release

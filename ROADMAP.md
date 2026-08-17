@@ -90,16 +90,28 @@ repositioned — real bug, not a nice-to-have) and an MVP Custom Widget type
 (sandboxed iframe, dev-authored HTML/CSS/JS) as an early precursor to
 Milestone 6's full block engine. See PROGRESS.md session 5.
 
-## Milestone 5 — Integrations
+## Milestone 5 — Integrations (in progress)
 
-- Calendar widget: Google Calendar (OAuth, read-only) + local `.ics` parsing,
-  unified `CalendarEvent` interface, month/week/day views
-- Music widget: unified `NowPlayingData` interface across Spotify (OAuth PKCE
-  + Web Playback SDK), Apple Music (MusicKit JS), YouTube Music (Odesli
-  polling), YouTube (Data API v3)
-- Secure token storage via Tauri's OS keychain integration (never SQLite,
-  never plaintext)
-- Graceful degradation: cached last-known state when an integration is down
+- [x] Secure token storage: OS-native keychain (Windows Credential Manager /
+      macOS Keychain / Linux Secret Service) via the `keyring` Rust crate,
+      exposed as Tauri commands — tokens never touch SQLite or a plaintext
+      file
+- [x] Calendar widget: local `.ics` parsing (RFC 5545 line-unfolding, VEVENT
+      fields, a supported RRULE subset — see `src/integrations/calendar/rrule.ts`)
+      + Google Calendar (OAuth 2.0 PKCE, read-only), unified `CalendarEvent`
+      interface, month/week/day views
+- [x] Music widget: unified `NowPlayingData` interface + pluggable provider
+      architecture; Spotify implemented (OAuth PKCE, polling — see
+      PROGRESS.md session 6 for why not the Web Playback SDK); Apple Music,
+      YouTube Music, and YouTube deliberately **not** implemented this
+      session — each has a real blocker, documented at the top of its
+      provider file (`src/integrations/music/{appleMusic,youtubeMusic,youtube}.ts`)
+      and in PROGRESS.md session 6
+- [x] Graceful degradation: both widgets cache last-known-good data (SQLite
+      for calendar events, `app_settings` for now-playing) and fall back to
+      it with a visible "offline" indicator when a live fetch fails
+- [ ] Apple Music, YouTube Music, YouTube now-playing — blocked on the
+      reasons above; revisit if/when a plausible mechanism exists
 
 ## Milestone 6 — Lego block widget builder
 

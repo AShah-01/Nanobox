@@ -11,6 +11,8 @@
     "sql:allow-execute",
     "sql:allow-select",
     "dialog:default",
-    "notification:default"
+    "notification:default",
+    "fs:default",
+    "fs:allow-read-text-file"
   ]
 }

@@ -3,6 +3,9 @@ use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_sql::{Migration, MigrationKind};
 
+mod keychain;
+mod oauth;
+
 fn migrations() -> Vec<Migration> {
     vec![
         Migration {
@@ -144,6 +147,29 @@ fn migrations() -> Vec<Migration> {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "milestone_5_integrations_tables",
+            sql: "
+                CREATE TABLE IF NOT EXISTS calendar_sources (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    kind TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    file_path TEXT,
+                    account_email TEXT,
+                    color TEXT NOT NULL DEFAULT '#7c9cff',
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+
+                CREATE TABLE IF NOT EXISTS calendar_events_cache (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source_id INTEGER NOT NULL REFERENCES calendar_sources(id) ON DELETE CASCADE,
+                    event_json TEXT NOT NULL,
+                    cached_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -169,11 +195,18 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations("sqlite:nanobox.db", migrations())
                 .build(),
         )
+        .invoke_handler(tauri::generate_handler![
+            keychain::secure_set,
+            keychain::secure_get,
+            keychain::secure_delete,
+            oauth::oauth_await_redirect,
+        ])
         .setup(|app| {
             let show_hide = MenuItem::with_id(app, "show_hide", "Show / Hide Nanobox", true, None::<&str>)?;
             let quit = PredefinedMenuItem::quit(app, Some("Quit Nanobox"))?;

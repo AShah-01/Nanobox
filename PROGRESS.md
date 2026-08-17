@@ -574,3 +574,180 @@ session, shipped a smaller real capability now:
 
 Calendar (Google/iCal) and Music (Spotify/Apple Music/YouTube)
 integrations. See [ROADMAP.md](ROADMAP.md).
+
+## Session 6 — 2026-08-17 — Milestone 5: Calendar + Music integrations
+
+**Milestone 5: mostly done.** Calendar widget fully built (local `.ics` +
+Google Calendar). Music widget's provider architecture is done and Spotify
+is fully wired up; Apple Music, YouTube Music, and YouTube are deliberately
+**not** implemented — each hit a real, structural blocker rather than a
+"ran out of time" cut, detailed below.
+
+### Secure token storage (`src-tauri/src/keychain.rs`)
+
+Three Tauri commands (`secure_set`/`secure_get`/`secure_delete`) wrapping
+the `keyring` crate (v4.1.6), which talks to each OS's native credential
+store — Windows Credential Manager, macOS Keychain, the Secret Service on
+Linux. This is what ROADMAP.md's "secure token storage via Tauri's OS
+keychain integration" meant literally: OAuth tokens for both Calendar and
+Music never touch SQLite or a plaintext file, full stop. Frontend wrapper:
+`src/integrations/secureStore.ts`.
+
+### OAuth loopback helper (`src-tauri/src/oauth.rs` + `src/integrations/oauth/pkce.ts`)
+
+Both Google Calendar and Spotify need the standard RFC 8252 desktop OAuth
+pattern: open the system browser at the provider's consent screen, catch
+the redirect on a local loopback port, exchange the code for tokens. Wrote
+this once as shared infrastructure instead of duplicating it per provider:
+
+- `oauth_await_redirect(port)` (Rust, std-only — no extra HTTP crate) binds
+  the given port, waits (up to 5 minutes, polled non-blocking) for one
+  request, parses the query string out of the request line, replies with a
+  "you can close this" HTML page, and hands the query string back.
+- `runOAuthPkceFlow()` (TypeScript) generates the PKCE verifier/challenge
+  and CSRF state with Web Crypto, opens the browser via
+  `@tauri-apps/plugin-opener`, awaits the redirect, verifies `state`, and
+  does the token exchange over `fetch`. Both Google's and Spotify's token
+  endpoints support CORS for exactly this public-client PKCE flow, so no
+  extra HTTP plugin was needed.
+- Each provider (Google, Spotify) gets a **fixed** loopback port
+  (42813, 42815) — that's the value the user registers as the redirect URI
+  on their own OAuth app. Since PKCE needs no client secret, users paste
+  their own Client ID into the widget rather than Nanobox shipping one;
+  there's nowhere to safely embed a secret in a distributed desktop binary
+  anyway.
+
+### Calendar widget (`src/widgets/built-in/Calendar/`, `src/integrations/calendar/`)
+
+- **`.ics` parsing** (`ics.ts`, `icsDate.ts`, `rrule.ts`): hand-rolled RFC
+  5545 parser — line unfolding, VEVENT property extraction, DATE vs.
+  DATE-TIME handling. RRULE support is deliberately partial: FREQ (DAILY/
+  WEEKLY/MONTHLY/YEARLY) + INTERVAL + COUNT + UNTIL, covering the large
+  majority of real recurring events. BYDAY/BYMONTHDAY/BYSETPOS (e.g. "every
+  Mon/Wed/Fri", "last Friday of the month") are **not** supported —
+  `parseRRule` returns `null` for those and the event falls back to a
+  single non-repeating occurrence, rather than a half-correct expansion
+  that would silently show wrong dates. TZID-qualified datetimes are
+  treated as local wall-clock time (no bundled IANA tz database); UTC "Z"
+  times and all-day dates are exact.
+- **Google Calendar** (`google.ts`): OAuth PKCE via the shared helper above,
+  read-only `calendar.readonly` scope, fetches the primary calendar's
+  events via the Calendar API, access-token refresh handled transparently.
+- **`CalendarEvent`** is the unified shape both sources normalise into
+  (`types.ts`); `CalendarSource` rows (new `calendar_sources` table,
+  migration v5) track each connected `.ics` file or Google account.
+- **Month/week/day views** (`CalendarViews.tsx`): month is a 6-week grid
+  with coloured dot indicators per source, week is a 7-column agenda list,
+  day is a full agenda. Clicking a month/week day jumps to its day view.
+- **Graceful degradation**: every source's events are cached wholesale in
+  the new `calendar_events_cache` table on a successful fetch. If a live
+  fetch fails (file moved, Google API down, offline), the widget falls back
+  to that cache and shows a small "⚠ showing last synced data" banner
+  instead of going blank.
+
+### Music widget (`src/widgets/built-in/Music/`, `src/integrations/music/`)
+
+- **`NowPlayingData`** unified shape + a `MusicProvider` interface
+  (`isConnected`/`connect`/`disconnect`/`fetchNowPlaying`) so providers are
+  genuinely pluggable — `src/integrations/music/index.ts` is the one place
+  that lists all four.
+- **Spotify** (`spotify.ts`): OAuth PKCE, polls
+  `GET /me/player/currently-playing` every 10s. Deliberately **not** the
+  Web Playback SDK ROADMAP.md named — that SDK turns the app into a
+  controllable playback *device* (streams audio in-browser, requires
+  Premium, needs a persistent player instance), which is a much bigger and
+  different feature than "show what's already playing somewhere else." The
+  read-only polling endpoint does exactly what the widget needs.
+- **Apple Music, YouTube Music, YouTube — not implemented, each for a real
+  reason** (full text in each file, `unavailableReason` surfaced as a
+  tooltip in the widget's disabled provider buttons):
+  - *Apple Music*: MusicKit JS needs a developer token signed with an Apple
+    Developer Program private key (ES256 JWT). That can't happen safely in
+    a pure client-side app — the key would have to ship inside the binary.
+    Needs a token-signing backend Nanobox (local-first, serverless)
+    doesn't have, or a manual per-user token-paste flow.
+  - *YouTube Music*: Odesli/song.link (what ROADMAP.md named) resolves a
+    *known* track link across services — it has no concept of what's
+    currently playing on an account, so it can't drive a live widget by
+    itself, and there's no public YouTube Music now-playing API to poll
+    instead.
+  - *YouTube*: the Data API v3 is a content/catalog API with no "what is
+    this user currently watching" endpoint. Real detection would need
+    browser-extension-level access to an open tab — out of scope for an
+    OAuth API client.
+  
+  These show up in the widget as visibly disabled provider buttons with a
+  "soon" tag and the reason in a tooltip, not as fake/broken connect
+  buttons.
+- **Graceful degradation**: same pattern as Calendar but via
+  `app_settings` (`storage/music.ts`) rather than a new table, since it's
+  just one JSON blob per provider, not a growing list — consistent with
+  how Milestone 3 already used `app_settings` for the theme choice.
+
+### Storage: migration v5
+
+`calendar_sources` and `calendar_events_cache` tables
+(`src-tauri/src/lib.rs`). Music has no new tables — connection state and
+now-playing cache live in the existing `app_settings` key/value table
+(secrets themselves are in the OS keychain, never here).
+
+### New Tauri capability: `fs`
+
+Added `tauri-plugin-fs` (Rust) + `@tauri-apps/plugin-fs` (frontend) with
+`fs:default` + `fs:allow-read-text-file` in `capabilities/default.json`, so
+a `.ics` file picked via the existing dialog plugin can actually be read.
+
+### Tests
+
+Added `tests/integrations/ics.test.ts` (timed events, all-day events, RRULE
+expansion with COUNT, RFC 5545 line unfolding, empty/non-VEVENT input) and
+`tests/integrations/rrule.test.ts` (INTERVAL stepping, UNTIL cutoff, range
+intersection, and confirming BYDAY-style rules correctly return `null`
+instead of guessing) — both pure-logic, no Tauri IPC needed, so they
+actually run in this sandboxed environment. 14/14 tests passing overall
+(was 3/3 before this session).
+
+### Build verification
+
+- `npx tsc --noEmit` — clean.
+- `npm run test` — 14/14 passing (11 new).
+- `cargo check` — **could not complete**, same standing environment gap
+  flagged since session 3: this container is missing the Linux GTK/GDK
+  system libraries (`gdk-3.0` via pkg-config) Tauri needs, so the build
+  fails on a pre-existing dependency (`gdk-sys`) before reaching any code
+  from this session. What *did* succeed first: Cargo fully resolved the
+  dependency graph, including the two new crates — `Cargo.lock` shows
+  `keyring 4.1.6` and `tauri-plugin-fs 2.5.1` resolved cleanly — so the new
+  `Cargo.toml` entries are valid; only the actual C-library compile step is
+  blocked here. Real verification is the `windows-latest`/`macos-latest` CI
+  matrix on the PR, same as every session since 3.
+- No interactive manual QA (same standing gap: Nanobox isn't a registered
+  app in this environment, and this feature specifically needs a real
+  browser-based OAuth round trip that can't be faked). Recommend a manual
+  pass connecting a real Google Calendar and Spotify account before relying
+  on this in daily use — particularly the loopback OAuth redirect (which
+  depends on the exact registered redirect URI matching) and token refresh
+  after the initial access token expires.
+
+### Known gaps / deliberately deferred
+
+- Apple Music, YouTube Music, YouTube now-playing — not implemented, see
+  above. Companion widget from Milestone 4 is still open too.
+- RRULE support is partial (no BYDAY/BYMONTHDAY/BYSETPOS) — see the Calendar
+  section above.
+- TZID-qualified `.ics` datetimes render as local wall-clock time (no
+  bundled timezone database) — only affects `.ics` files containing
+  non-UTC, non-local timezone events.
+- No collision/overlap handling in the calendar month grid beyond a "+N"
+  overflow indicator — same category of gap as the widget grid's lack of
+  collision detection (Milestone 2).
+- Neither widget lets the user reorder or reprioritize sources/providers
+  beyond a flat add/remove list.
+
+### Next up (rest of Milestone 5, then Milestone 6)
+
+If revisited: a manual OAuth QA pass with real accounts, then either accept
+the three deferred music providers as permanently out of scope or design
+around their actual blockers (e.g. a minimal signing backend for Apple
+Music). Otherwise, next milestone is 6 — the Lego block widget builder. See
+[ROADMAP.md](ROADMAP.md).
