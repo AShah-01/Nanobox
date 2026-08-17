@@ -91,6 +91,59 @@ fn migrations() -> Vec<Migration> {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 4,
+            description: "milestone_4_adhd_toolkit_tables",
+            sql: "
+                CREATE TABLE IF NOT EXISTS timeline_blocks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    label TEXT NOT NULL,
+                    icon TEXT NOT NULL DEFAULT '',
+                    color TEXT NOT NULL DEFAULT '#7c9cff',
+                    start_time TEXT NOT NULL,
+                    end_time TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+
+                CREATE TABLE IF NOT EXISTS brain_dump_entries (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    text TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+
+                CREATE TABLE IF NOT EXISTS task_breakdowns (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+
+                CREATE TABLE IF NOT EXISTS task_breakdown_steps (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    breakdown_id INTEGER NOT NULL REFERENCES task_breakdowns(id) ON DELETE CASCADE,
+                    text TEXT NOT NULL,
+                    completed INTEGER NOT NULL DEFAULT 0,
+                    sort_order INTEGER NOT NULL DEFAULT 0
+                );
+
+                CREATE TABLE IF NOT EXISTS mood_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    mood TEXT NOT NULL,
+                    note TEXT NOT NULL DEFAULT '',
+                    log_date TEXT NOT NULL UNIQUE,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+
+                CREATE TABLE IF NOT EXISTS reminders (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    label TEXT NOT NULL,
+                    interval_minutes INTEGER NOT NULL DEFAULT 60,
+                    enabled INTEGER NOT NULL DEFAULT 1,
+                    last_fired_at TEXT,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

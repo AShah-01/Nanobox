@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { WidgetGrid } from "./widgets/WidgetGrid";
 import { ThemeSwitcher } from "./components/ThemeSwitcher";
+import { TitleBar } from "./components/TitleBar";
 import { ensureAutostart } from "./core/autostart";
 import { getDb } from "./storage/db";
 
@@ -12,8 +13,11 @@ function App() {
 
   return (
     <main className="overlay">
-      <WidgetGrid />
-      <ThemeSwitcher />
+      <TitleBar />
+      <div className="overlay__body">
+        <WidgetGrid />
+        <ThemeSwitcher />
+      </div>
     </main>
   );
 }

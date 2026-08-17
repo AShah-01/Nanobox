@@ -1,0 +1,142 @@
+.reminders-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reminders-widget__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.reminders-widget__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.reminders-widget__item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.reminders-widget__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.reminders-widget__label {
+  font-size: 0.85em;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reminders-widget__meta {
+  font-size: 0.72em;
+  color: var(--nb-text-muted);
+}
+
+.reminders-widget__delete {
+  background: none;
+  border: none;
+  color: var(--nb-text-muted);
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.reminders-widget__delete:hover {
+  color: var(--nb-text);
+}
+
+.reminders-widget__empty {
+  color: var(--nb-text-muted);
+  font-size: 0.85em;
+}
+
+.reminders-widget__form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: var(--nb-border-style);
+  padding-top: 8px;
+}
+
+.reminders-widget__form input {
+  background: var(--nb-surface);
+  border: var(--nb-border-style);
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-family: inherit;
+  font-size: 0.85em;
+  padding: 6px 8px;
+}
+
+.reminders-widget__presets {
+  display: flex;
+  gap: 4px;
+}
+
+.reminders-widget__presets button {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text-muted);
+  font-size: 0.75em;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.reminders-widget__presets button.is-active {
+  background: var(--nb-accent);
+  color: #0d0f16;
+  font-weight: 600;
+}
+
+.reminders-widget__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.reminders-widget__form-actions button {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.8em;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.reminders-widget__btn--primary {
+  background: var(--nb-accent) !important;
+  color: #0d0f16 !important;
+  font-weight: 600;
+}
+
+.reminders-widget__add {
+  align-self: flex-start;
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--nb-text-muted);
+  font-size: 0.82em;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.reminders-widget__add:hover {
+  border-color: var(--nb-accent);
+  color: var(--nb-accent);
+}

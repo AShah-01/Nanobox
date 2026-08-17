@@ -1,9 +1,44 @@
 import { ComponentType } from "react";
-import { Alarm, AppShortcuts, Clock, Countdown, FocusMode, HabitTracker, Notes } from "./built-in";
+import {
+  Alarm,
+  AppShortcuts,
+  BrainDump,
+  Clock,
+  Countdown,
+  FocusMode,
+  GentleReminders,
+  HabitTracker,
+  MoodCheckIn,
+  Notes,
+  TaskBreakdown,
+  TodayTimeline,
+  VisualTimer,
+} from "./built-in";
 
-export type WidgetId = "clock" | "notes" | "alarm" | "shortcuts" | "countdown" | "habit-tracker" | "focus-mode";
+export type WidgetId =
+  | "clock"
+  | "notes"
+  | "alarm"
+  | "shortcuts"
+  | "countdown"
+  | "habit-tracker"
+  | "focus-mode"
+  | "visual-timer"
+  | "today-timeline"
+  | "brain-dump"
+  | "task-breakdown"
+  | "mood-check-in"
+  | "gentle-reminders"
+  | "custom";
 
-export const WIDGET_REGISTRY: Record<WidgetId, ComponentType> = {
+/**
+ * "custom" is deliberately excluded here — unlike every other widget, it
+ * needs its own `WidgetInstance` (for the per-instance code in `settings`),
+ * so `WidgetGrid` renders it directly instead of through this no-props map.
+ * It's still a normal entry in `WIDGET_LABELS` / `DEFAULT_SIZE` so it shows
+ * up in the add-widget menu like everything else.
+ */
+export const WIDGET_REGISTRY: Record<Exclude<WidgetId, "custom">, ComponentType> = {
   clock: Clock,
   notes: Notes,
   alarm: Alarm,
@@ -11,6 +46,12 @@ export const WIDGET_REGISTRY: Record<WidgetId, ComponentType> = {
   countdown: Countdown,
   "habit-tracker": HabitTracker,
   "focus-mode": FocusMode,
+  "visual-timer": VisualTimer,
+  "today-timeline": TodayTimeline,
+  "brain-dump": BrainDump,
+  "task-breakdown": TaskBreakdown,
+  "mood-check-in": MoodCheckIn,
+  "gentle-reminders": GentleReminders,
 };
 
 export const WIDGET_LABELS: Record<WidgetId, string> = {
@@ -21,6 +62,13 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   countdown: "Countdown",
   "habit-tracker": "Habits",
   "focus-mode": "Focus Mode",
+  "visual-timer": "Visual Timer",
+  "today-timeline": "Today",
+  "brain-dump": "Brain Dump",
+  "task-breakdown": "Task Breakdown",
+  "mood-check-in": "Mood Check-in",
+  "gentle-reminders": "Gentle Reminders",
+  custom: "Custom Widget (developer)",
 };
 
 export const DEFAULT_SIZE: Record<WidgetId, { w: number; h: number }> = {
@@ -31,4 +79,11 @@ export const DEFAULT_SIZE: Record<WidgetId, { w: number; h: number }> = {
   countdown: { w: 260, h: 240 },
   "habit-tracker": { w: 260, h: 280 },
   "focus-mode": { w: 240, h: 260 },
+  "visual-timer": { w: 240, h: 320 },
+  "today-timeline": { w: 280, h: 300 },
+  "brain-dump": { w: 260, h: 280 },
+  "task-breakdown": { w: 280, h: 320 },
+  "mood-check-in": { w: 260, h: 220 },
+  "gentle-reminders": { w: 260, h: 280 },
+  custom: { w: 300, h: 280 },
 };

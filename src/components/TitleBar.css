@@ -1,0 +1,42 @@
+.title-bar {
+  flex: none;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 0 12px;
+  background: rgba(0, 0, 0, 0.18);
+  border-bottom: var(--nb-border-style);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.title-bar__brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--nb-text-muted);
+}
+
+.title-bar__brand img {
+  border-radius: 3px;
+}
+
+.title-bar__hide {
+  background: none;
+  border: none;
+  color: var(--nb-text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9em;
+  line-height: 1;
+}
+
+.title-bar__hide:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--nb-text);
+}
