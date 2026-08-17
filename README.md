@@ -56,6 +56,8 @@ nanobox/
 
 ## Getting started
 
+### Windows
+
 **First time here?** All you need is [Node.js](https://nodejs.org/) installed,
 then:
 
@@ -114,6 +116,10 @@ yourself.
 ```bash
 npm run tauri build
 ```
+
+### Mac
+... (Mac side is still pending. Please wait patiently. Thanks)
+
 
 ### Grab a build without building it yourself
 
