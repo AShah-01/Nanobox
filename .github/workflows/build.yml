@@ -43,3 +43,21 @@ jobs:
 
       - name: Build Tauri app (debug)
         run: npm run tauri build -- --debug
+
+      - name: Upload build artifact (Windows)
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nanobox-windows-debug
+          path: |
+            src-tauri/target/debug/bundle/msi/*.msi
+            src-tauri/target/debug/bundle/nsis/*.exe
+          if-no-files-found: error
+
+      - name: Upload build artifact (macOS)
+        if: matrix.platform == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nanobox-macos-debug
+          path: src-tauri/target/debug/bundle/dmg/*.dmg
+          if-no-files-found: error
