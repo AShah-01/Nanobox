@@ -7,11 +7,12 @@ For a session-by-session log of what's been built, see [PROGRESS.md](PROGRESS.md
 
 ## Current focus
 
-**Milestone 1 — Foundation shell.** Get a Tauri 2 + React + TypeScript app
-that boots to a desktop overlay, lives in the system tray, starts on login,
-persists data to a local SQLite database, and renders a first real widget
-(Clock). This has to build cleanly on both Windows and macOS before any
-widget/theme/integration work starts.
+**Milestone 4 — Everyday ADHD/neurodivergent toolkit widgets.** Milestones
+1–3 (foundation shell, core widgets, theme engine) are done. Milestone 4 adds
+a second wave of widgets researched from what ADHD/neurodivergent people
+actually use daily (Tiimo, Time Timer, Goblin.tools, Finch, Sprout),
+simplified to fit Nanobox's local-first, no-account shape. See
+[ROADMAP.md](ROADMAP.md) for the widget list and what got deliberately cut.
 
 ## Working agreement
 
@@ -30,9 +31,10 @@ widget/theme/integration work starts.
 
 See [ROADMAP.md](ROADMAP.md) for the full breakdown. Short version:
 
-1. **Foundation shell** — scaffold, tray, overlay window, autostart, SQLite, Clock widget
-2. **Core widgets** — Notes, Alarm, App Shortcuts, Countdown, Habit Tracker, Focus mode
-3. **Theme engine** — all six themes, token pipeline, accessibility baseline
-4. **Integrations** — Calendar (Google/iCal) and Music (Spotify/Apple Music/YouTube)
-5. **Lego block widget builder** — visual programming canvas + sandboxed custom blocks
-6. **Polish & release** — packaging (MSIX/DMG), onboarding, docs site, public release
+1. **Foundation shell** — scaffold, tray, overlay window, autostart, SQLite, Clock widget ✅
+2. **Core widgets** — Notes, Alarm, App Shortcuts, Countdown, Habit Tracker, Focus mode ✅
+3. **Theme engine** — all six themes, token pipeline, accessibility baseline ✅ (per-theme customisation + colour-blindness checks still open)
+4. **Everyday toolkit widgets** — Visual Timer, Today Timeline, Brain Dump, Task Breakdown, Mood Check-in, Gentle Reminders, (stretch) Companion — in progress
+5. **Integrations** — Calendar (Google/iCal) and Music (Spotify/Apple Music/YouTube)
+6. **Lego block widget builder** — visual programming canvas + sandboxed custom blocks
+7. **Polish & release** — packaging (MSIX/DMG), onboarding, docs site, public release

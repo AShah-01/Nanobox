@@ -364,3 +364,59 @@ that CSS custom properties alone can't express:
 Per-theme customisation UI + `.nanotheme` export/import, then
 colour-blindness simulation checks, before moving to Milestone 4
 (Integrations). See [ROADMAP.md](ROADMAP.md).
+
+## Session 4 — 2026-08-17 — Icon bug fix + roadmap: new Milestone 4 [CEO-approved]
+
+### Task Manager icon bug — diagnosed and fixed
+
+User reported Task Manager showing the old (pre-logo) icon. Root cause:
+`src-tauri/target/debug/nanobox.exe` on disk was built 2026-08-16 21:18,
+**before** the logo PR merged the new `icon.ico` (2026-08-17 16:22) — Windows
+was correctly showing the icon actually embedded in that stale binary, not a
+caching bug. Rebuilt (`npm run tauri build -- --debug`); new exe (16:31)
+embeds the current icon. If it's still wrong after a rebuild, that would
+point to genuine Explorer/Task Manager icon-cache staleness (fix: restart
+`explorer.exe`, or clear `%LocalAppData%\IconCache.db` equivalent), but
+that wasn't needed here — a rebuild was the whole fix.
+
+### Roadmap: inserted new Milestone 4, renumbered the rest
+
+Per direct request, researched what ADHD/neurodivergent people actually use
+day to day before adding widgets, rather than guessing. Searched for
+current (2026) popular ADHD/neurodivergent apps and cross-referenced against
+Nanobox's existing 7 widgets to find real gaps, not overlap:
+
+- [5 Best ADHD Apps for Adults (Saner.AI)](https://www.saner.ai/blogs/best-adhd-apps-for-adults)
+- [We tested 44 ADHD apps (Saner.AI)](https://blog.saner.ai/best-adhd-apps/)
+- [12 Best Apps for ADHD 2026 (Inflow)](https://www.getinflow.io/post/best-apps-for-adhd)
+- [Best apps for neurodivergent people 2026 (tonen)](https://usetonen.com/blog/apps-for-neurodivergent-people)
+- [Focus Apps for ADHD: 2026 Analysis (Brain.fm)](https://www.brain.fm/blog/focus-apps-for-adhd)
+- [Time Blindness in ADHD (Simply Psychology)](https://www.simplypsychology.com/articles/adhd-time-blindness-management)
+- [Flow Club: Body Doubling for ADHD](https://www.flow.club/what-is-body-doubling)
+
+Recurring patterns not yet in Nanobox: Tiimo's visual/colour daily timeline
+(time blindness), Time Timer's shrinking-disk visual countdown (time
+blindness, distinct from Focus Mode's digital Pomodoro), Goblin.tools'
+"Magic ToDo" task breakdown (task-initiation paralysis), frictionless
+single-line capture (the universal "write it down before you lose it"
+pattern, distinct from Notes' heavier create/edit flow), daily mood
+check-ins (common across Finch/Inflow), and gentle interval-based nudges
+(Sprout/Finch — distinct mechanic from Alarm's clock-time model).
+Focusmate-style live body-doubling was researched and deliberately **not**
+added — it needs a real-time matching/presence backend, out of scope for a
+local-first single-user app with no server.
+
+Added as the new **Milestone 4** in `ROADMAP.md` (renumbering the former
+4/5/6 — Integrations, Lego block builder, Polish & release — to 5/6/7):
+Visual Timer, Today Timeline, Brain Dump, Task Breakdown, Mood Check-in,
+Gentle Reminders, and a stretch-goal Companion widget (cosmetic only, reads
+existing `habits`/`habit_logs` data — cut first if the milestone runs long).
+Updated `PLAN.md`'s "current focus" and milestone list to match; the nightly
+cron routine's prompt already says "defer to what ROADMAP.md/PROGRESS.md say
+is next" rather than hardcoding a milestone number, so it needed no change.
+
+### Next up (Milestone 4)
+
+Visual Timer, Today Timeline, Brain Dump, Task Breakdown, Mood Check-in,
+Gentle Reminders widgets (Companion widget if time allows). See
+[ROADMAP.md](ROADMAP.md).

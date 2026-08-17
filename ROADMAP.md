@@ -49,7 +49,40 @@ See [PROGRESS.md](PROGRESS.md) session 2 for implementation notes and known gaps
 See [PROGRESS.md](PROGRESS.md) session 3 for implementation notes and what's
 left before this milestone is fully done.
 
-## Milestone 4 — Integrations
+## Milestone 4 — Everyday ADHD/neurodivergent toolkit widgets
+
+Added after Milestone 3, pushing the original Milestone 4–6 down one slot
+each (now 5–7). Scoped from researching what ADHD/neurodivergent people
+actually reach for daily — Tiimo, Time Timer, Goblin.tools' Magic ToDo,
+Finch, Sprout — then simplified to fit the local-first, no-account,
+no-AI-dependency shape Nanobox already has. Explicitly cut: Focusmate-style
+live body-doubling (needs a real-time matching/presence backend — out of
+scope for a single-user local app; revisit if/when cloud sync ever happens,
+see `PRODUCT_SPEC.md` open questions).
+
+- Visual Timer widget: Time Timer-style shrinking colour disk/arc for a
+  chosen duration — readable at a glance without reading digits (the
+  single most common time-blindness aid across every app researched)
+- Today Timeline widget: Tiimo-inspired vertical strip of today's time
+  blocks, icon + colour per block, current-time indicator line — manually
+  entered for now, becomes calendar-fed once Milestone 5 lands
+- Brain Dump widget: near-zero-friction single-line capture — type, hit
+  Enter, done. Deliberately lighter-weight than the Notes widget's
+  title/body/colour flow; addresses "capture it before you lose it"
+- Task Breakdown widget: Goblin.tools' Magic ToDo, simplified to skip the
+  AI call — write one big/vague task as a header, add sub-steps as
+  checkboxes underneath by hand, check off as you go
+- Mood Check-in widget: single-tap emoji + optional short note, once a day,
+  small 7-day history strip
+- Gentle Reminders widget: Sprout/Finch-style interval nudges ("stand up
+  every 45 min", "drink water") — runs on a repeating interval rather than
+  a clock time, so it's a distinct mechanic from the Alarm widget
+- Companion widget (stretch — cut first if the milestone runs long): a
+  small plant/creature that visibly grows from existing Habit Tracker
+  streak data (`habits`/`habit_logs`) — Finch-inspired, purely a cosmetic
+  read of data that already exists, no new mechanics required
+
+## Milestone 5 — Integrations
 
 - Calendar widget: Google Calendar (OAuth, read-only) + local `.ics` parsing,
   unified `CalendarEvent` interface, month/week/day views
@@ -60,7 +93,7 @@ left before this milestone is fully done.
   never plaintext)
 - Graceful degradation: cached last-known state when an integration is down
 
-## Milestone 5 — Lego block widget builder
+## Milestone 6 — Lego block widget builder
 
 - Block engine AST: nodes, edges, port types, evaluation order
 - Visual canvas (React Flow) with premade block categories: Data, Display,
@@ -71,7 +104,7 @@ left before this milestone is fully done.
 - Widget export/import as `.nanowidget` (JSON schema + base64 block code)
 - Block widget renderer: run a block program as a live desktop widget
 
-## Milestone 6 — Polish & release
+## Milestone 7 — Polish & release
 
 - First-run onboarding wizard: theme picker, accent colour, add first widget
 - Full keyboard navigation across all widgets and settings
