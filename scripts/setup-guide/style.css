@@ -33,7 +33,9 @@ body {
 }
 
 .hero__badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -42,8 +44,12 @@ body {
   background: rgba(124, 156, 255, 0.12);
   border: 1px solid rgba(124, 156, 255, 0.3);
   border-radius: 999px;
-  padding: 4px 12px;
+  padding: 4px 12px 4px 8px;
   margin-bottom: 16px;
+}
+
+.hero__badge img {
+  border-radius: 3px;
 }
 
 .hero h1 {

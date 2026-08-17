@@ -1,3 +1,5 @@
+<img src="src/assets/logo/nanobox-mark.svg" alt="Nanobox logo" width="72" height="72">
+
 # Nanobox
 
 > A fully customisable desktop companion built first for neurodivergent people
@@ -5,7 +7,7 @@
 > calendar, alarms, clocks, shortcuts, and a lego-block custom widget builder,
 > all in one persistent, themeable desktop hub.
 
-**Status:** Pre-release, active development (Milestone 1 — foundation shell).
+**Status:** Pre-release, active development (Milestone 3 — theme engine — in progress).
 
 ---
 
