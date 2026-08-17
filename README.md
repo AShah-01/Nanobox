@@ -7,7 +7,7 @@
 > calendar, alarms, clocks, shortcuts, and a lego-block custom widget builder,
 > all in one persistent, themeable desktop hub.
 
-**Status:** Pre-release, active development (Milestone 4 — everyday ADHD/neurodivergent toolkit widgets — in progress).
+**Status:** Pre-release, active development (Milestone 5 — Calendar + Music integrations — local-first foundation done, OAuth completion pending credentials; see [ROADMAP.md](ROADMAP.md)).
 
 ---
 
@@ -104,6 +104,20 @@ npm run tauri dev
 ```bash
 npm run tauri build
 ```
+
+### Grab a build without building it yourself
+
+Every push to `main` builds Nanobox on both Windows and macOS via
+[GitHub Actions](https://github.com/AShah-01/Nanobox/actions/workflows/build.yml)
+and uploads the result — an MSI + NSIS installer for Windows, a DMG for
+macOS — as a workflow artifact. Open the latest successful run and download
+`nanobox-windows-debug` or `nanobox-macos-debug` from the Artifacts section
+at the bottom of the page.
+
+These are unsigned **debug** builds (larger, unoptimized, no code signing/
+notarization) meant for trying Nanobox out or testing a PR, not a polished
+release — signed, optimized installers are Milestone 7 (Polish & release)
+work, not done yet.
 
 ## Roadmap & progress
 

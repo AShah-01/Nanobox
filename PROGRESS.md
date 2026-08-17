@@ -696,3 +696,53 @@ redirect-capture mechanism above), Google Calendar OAuth, YouTube Data API,
 and/or Apple MusicKit. Otherwise, next unblocked work is Milestone 6 (lego
 block widget builder) or finishing Milestone 3's per-theme customisation
 UI. See [ROADMAP.md](ROADMAP.md).
+
+### Postscript: two independent Milestone 5 efforts collided
+
+While this session was building the plan above (this PR, #7), the nightly
+cron routine set up earlier had *also* independently started Milestone 5 on
+its own branch and opened a separate PR (#6) — neither agent knew about the
+other's work until both were done. Worth recording plainly, not glossing
+over:
+
+- **#6 was more complete.** It implemented real `RRULE` recurrence
+  expansion (DAILY/WEEKLY/MONTHLY/YEARLY + INTERVAL/COUNT/UNTIL) and
+  actually finished OAuth PKCE for both Google Calendar and Spotify,
+  including a hand-rolled loopback HTTP redirect-catcher in Rust
+  (`oauth.rs`, std-only) — exactly the piece this session's Music widget
+  had explicitly deferred as "needs a redirect-capture mechanism, not
+  built yet."
+- Its PR description claimed "14/14 [tests] passing." That was checked,
+  not trusted: 2 of the 14 were actually failing (a real bug — two
+  `expandRRule` tests constructed `rangeStart` from a bare date-only
+  string, which the ECMAScript spec parses as UTC midnight, while
+  `dtstart` came from a date-time string parsed as local time; in a
+  timezone ahead of UTC that ordering flip silently dropped the first
+  occurrence). Confirmed the production code path wasn't affected —
+  `Calendar.tsx` builds its ranges via a consistent local-time
+  `startOfDay()` helper — so this was a test-construction bug, not a
+  shipped one. Fixed it directly on #6's branch and verified 14/14 passed
+  for real afterward, rather than editing the PR description to match an
+  unverified claim.
+- Also read `oauth.rs` and `src/integrations/oauth/pkce.ts` end to end
+  before recommending anything: loopback listener binds `127.0.0.1` only
+  (never `0.0.0.0`), starts listening *before* opening the browser to
+  avoid a race, uses S256 PKCE, and verifies the `state` param against
+  CSRF. No red flags. `keychain.rs`'s `secure_set`/`secure_get`/
+  `secure_delete` turned out nearly identical to what this session had
+  independently written for the same purpose — good convergent signal
+  that shape was the right one.
+- Given the choice, the recommendation was to adopt #6 over #7 (this PR)
+  after fixing the bug. **The user merged #7 directly on GitHub before
+  that could happen** — a real, deliberate action, not a mistake to
+  silently undo. Asked directly whether to keep #7 (already on main) or
+  revert it and switch to #6; the answer was to keep #7. PR #6 was closed
+  unmerged, with its branch (`claude/milestone-5-8d2pih`) left intact and
+  a comment explaining why, in case its `RRULE`/OAuth work is worth
+  cherry-picking or rebuilding later.
+- **Process gap worth naming**: nothing currently stops two agents (a
+  scheduled cron routine and an interactive session) from picking up the
+  same unclaimed milestone at the same time. `ROADMAP.md` checkboxes get
+  updated after a PR merges, not when work starts, so there's no signal
+  that a milestone is already "claimed." Not fixed this session — flagging
+  it here so it doesn't happen invisibly again.
