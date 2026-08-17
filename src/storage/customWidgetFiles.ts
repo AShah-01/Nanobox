@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import { join } from "@tauri-apps/api/path";
 
 export interface NanowidgetFile {
   title: string;
@@ -22,11 +21,12 @@ function slugify(title: string): string {
  * so it's a real, browsable, portable file, not just a database row. SQLite
  * stays the source the app actually reads from at runtime; this is a
  * human-visible export, not a second source of truth.
+ *
+ * Goes through `save_custom_widget_file` (not a generic write-any-path
+ * command) — the Rust side sanitizes the filename and always confines the
+ * write to the custom-widgets folder, regardless of what's passed here.
  */
 export async function saveCustomWidgetFile(instanceId: number, widget: NanowidgetFile): Promise<string> {
-  const dir = await invoke<string>("custom_widgets_dir");
   const filename = `${slugify(widget.title)}-${instanceId}.nanowidget.json`;
-  const path = await join(dir, filename);
-  await invoke("write_text_file", { path, contents: JSON.stringify(widget, null, 2) });
-  return path;
+  return invoke<string>("save_custom_widget_file", { filename, contents: JSON.stringify(widget, null, 2) });
 }

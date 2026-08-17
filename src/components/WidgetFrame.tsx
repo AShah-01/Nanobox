@@ -15,9 +15,13 @@ interface WidgetFrameProps extends PropsWithChildren {
  */
 export function WidgetFrame({ title, children }: WidgetFrameProps) {
   const chrome = useWidgetChrome();
+  // Falls back to a generic label so the section stays identifiable to
+  // assistive tech even when a widget (e.g. Clock) omits a visual title —
+  // it still gets a real, interactive header once inside WidgetGrid.
+  const accessibleLabel = title || (chrome ? "Widget" : undefined);
 
   return (
-    <section className="widget-frame" aria-label={title}>
+    <section className="widget-frame" aria-label={accessibleLabel}>
       {(title || chrome) && (
         <header
           className={`widget-frame__title ${chrome ? "is-draggable" : ""}`}

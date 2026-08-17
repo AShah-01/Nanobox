@@ -43,8 +43,8 @@ function cellStyle(instance: WidgetInstance): CSSProperties {
     opacity: instance.opacity,
   };
   const { color, borderStyle } = parseStyleSettings(instance.style_settings);
-  if (color) {
-    const shades = deriveShades(color);
+  const shades = color ? deriveShades(color) : null;
+  if (shades) {
     Object.assign(style, {
       "--nb-accent": shades.accent,
       "--nb-accent-text": shades.accentText,
@@ -52,8 +52,7 @@ function cellStyle(instance: WidgetInstance): CSSProperties {
     });
   }
   if (borderStyle) {
-    const accent = color ? deriveShades(color).accent : "var(--nb-accent)";
-    const css = borderStyleCss(borderStyle, accent);
+    const css = borderStyleCss(borderStyle, shades?.accent ?? "var(--nb-accent)");
     Object.assign(style, { "--nb-widget-border": css.border, "--nb-widget-shadow": css.boxShadow });
   }
   return style;
@@ -104,7 +103,12 @@ export function WidgetGrid() {
   }
 
   function setStyle(instance: WidgetInstance, next: WidgetStyleSettings) {
-    const json = Object.keys(next).length > 0 ? JSON.stringify(next) : null;
+    // Drop undefined-valued keys (e.g. a "reset to theme" click) before deciding
+    // whether anything's actually set — Object.keys() counts them even though
+    // JSON.stringify would silently omit them, which previously could persist
+    // "{}" instead of clearing the column to NULL.
+    const cleaned = Object.fromEntries(Object.entries(next).filter(([, v]) => v !== undefined)) as WidgetStyleSettings;
+    const json = Object.keys(cleaned).length > 0 ? JSON.stringify(cleaned) : null;
     setInstances((prev) => prev.map((i) => (i.id === instance.id ? { ...i, style_settings: json } : i)));
     updateWidgetStyle(instance.id, json).catch((err) => console.error("failed to save widget style", err));
   }
