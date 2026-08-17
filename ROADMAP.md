@@ -90,16 +90,31 @@ repositioned — real bug, not a nice-to-have) and an MVP Custom Widget type
 (sandboxed iframe, dev-authored HTML/CSS/JS) as an early precursor to
 Milestone 6's full block engine. See PROGRESS.md session 5.
 
-## Milestone 5 — Integrations
+## Milestone 5 — Integrations (in progress: local-first foundation done)
 
-- Calendar widget: Google Calendar (OAuth, read-only) + local `.ics` parsing,
-  unified `CalendarEvent` interface, month/week/day views
-- Music widget: unified `NowPlayingData` interface across Spotify (OAuth PKCE
-  + Web Playback SDK), Apple Music (MusicKit JS), YouTube Music (Odesli
-  polling), YouTube (Data API v3)
-- Secure token storage via Tauri's OS keychain integration (never SQLite,
-  never plaintext)
-- Graceful degradation: cached last-known state when an integration is down
+Calendar and Music both need OAuth credentials (Google Cloud project,
+Spotify Developer app, a paid Apple Developer membership for MusicKit,
+YouTube Data API key) registered under a real account — not something an
+agent can self-provision. Scoped this session to everything genuinely
+buildable without them; see PROGRESS.md session 6 for the full breakdown
+and what's still gated on credentials.
+
+- [x] Secure token storage via the OS keychain (Windows Credential Manager /
+      macOS Keychain / Linux Secret Service, via the Rust `keyring` crate) —
+      `secure_set`/`secure_get`/`secure_delete` commands, never SQLite,
+      never plaintext
+- [x] Calendar widget: local `.ics` file import + parsing, unified
+      `CalendarEvent` interface, Day/Week/Month views
+- [ ] Calendar: Google Calendar OAuth sync — gated on a Google Cloud OAuth
+      client ID
+- [x] Music widget: unified `NowPlayingData` interface, adapter registry
+      for Spotify/Apple Music/YouTube Music/YouTube, credential entry per
+      source (saved via the keychain), graceful "not connected" UI
+- [ ] Music: actual OAuth completion + live now-playing data for each
+      source — gated on credentials per source (see PROGRESS.md session 6
+      for exactly what's needed per service)
+- [x] Graceful degradation: every integration shows a clear "not connected"
+      state rather than failing or showing stale/fake data
 
 ## Milestone 6 — Lego block widget builder
 

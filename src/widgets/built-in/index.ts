@@ -12,3 +12,5 @@ export { TaskBreakdown } from "./TaskBreakdown/TaskBreakdown";
 export { MoodCheckIn } from "./MoodCheckIn/MoodCheckIn";
 export { GentleReminders } from "./GentleReminders/GentleReminders";
 export { CustomWidget } from "./CustomWidget/CustomWidget";
+export { Calendar } from "./Calendar/Calendar";
+export { Music } from "./Music/Music";

@@ -144,7 +144,66 @@ fn migrations() -> Vec<Migration> {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "milestone_5_calendar_events",
+            sql: "
+                CREATE TABLE IF NOT EXISTS calendar_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    uid TEXT,
+                    title TEXT NOT NULL,
+                    start_at TEXT NOT NULL,
+                    end_at TEXT NOT NULL,
+                    all_day INTEGER NOT NULL DEFAULT 0,
+                    source TEXT NOT NULL DEFAULT 'ics',
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    UNIQUE(uid, start_at)
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
     ]
+}
+
+#[tauri::command]
+fn read_text_file(path: String) -> Result<String, String> {
+    std::fs::read_to_string(path).map_err(|e| e.to_string())
+}
+
+/// Thin wrapper over the OS keychain (Windows Credential Manager / macOS
+/// Keychain / Linux Secret Service via the `keyring` crate) for integration
+/// tokens — per PRODUCT_SPEC.md, these must never land in SQLite or a
+/// plaintext file. `service` namespaces entries per integration (e.g.
+/// "nanobox-spotify"); `account` is the key within it (e.g. "client_id",
+/// "access_token").
+#[tauri::command]
+fn secure_set(service: String, account: String, value: String) -> Result<(), String> {
+    keyring::Entry::new(&service, &account)
+        .and_then(|entry| entry.set_password(&value))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn secure_get(service: String, account: String) -> Result<Option<String>, String> {
+    match keyring::Entry::new(&service, &account) {
+        Ok(entry) => match entry.get_password() {
+            Ok(value) => Ok(Some(value)),
+            Err(keyring::Error::NoEntry) => Ok(None),
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+fn secure_delete(service: String, account: String) -> Result<(), String> {
+    match keyring::Entry::new(&service, &account) {
+        Ok(entry) => match entry.delete_credential() {
+            Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    }
 }
 
 fn toggle_overlay(app: &tauri::AppHandle) {
@@ -174,6 +233,12 @@ pub fn run() {
                 .add_migrations("sqlite:nanobox.db", migrations())
                 .build(),
         )
+        .invoke_handler(tauri::generate_handler![
+            read_text_file,
+            secure_set,
+            secure_get,
+            secure_delete
+        ])
         .setup(|app| {
             let show_hide = MenuItem::with_id(app, "show_hide", "Show / Hide Nanobox", true, None::<&str>)?;
             let quit = PredefinedMenuItem::quit(app, Some("Quit Nanobox"))?;

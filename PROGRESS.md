@@ -574,3 +574,125 @@ session, shipped a smaller real capability now:
 
 Calendar (Google/iCal) and Music (Spotify/Apple Music/YouTube)
 integrations. See [ROADMAP.md](ROADMAP.md).
+
+## Session 6 — 2026-08-17 — Milestone 5: local-first integrations foundation [CEO-approved]
+
+**Milestone 5: local-first portion done, OAuth portion explicitly gated on
+credentials.** Before writing any code, flagged the real blocker to the
+user: Google Calendar, Spotify, Apple Music, and YouTube all require OAuth
+credentials registered under a real account (Google Cloud project, Spotify
+Developer app, a *paid* Apple Developer membership for MusicKit, a YouTube
+Data API key) — none of which an agent can self-provision. User chose
+"local-first now, wire up OAuth later": build everything genuinely usable
+without external accounts, with real (not stubbed/faked) code throughout,
+and leave the OAuth completion step clearly gated for whenever credentials
+exist.
+
+### Secure token storage (new, reusable infra)
+
+`src-tauri/src/lib.rs` gained three commands — `secure_set`, `secure_get`,
+`secure_delete` — wrapping the `keyring` crate (v3, with `apple-native` +
+`windows-native` + `sync-secret-service` features for the OS-native
+credential stores on each target platform). This is exactly what
+PRODUCT_SPEC.md calls for: integration tokens live in the OS keychain,
+never SQLite, never a plaintext file. `src/storage/secureStore.ts` wraps
+the three commands for the frontend. Verified the crate/feature choice via
+a web search before writing Cargo.toml (rather than guessing feature-flag
+names and iterating blind) — `cargo check` compiled clean on the first
+attempt, including the `keyring::Error::NoEntry` match arm and
+`delete_credential()` method name.
+
+Also added a plain `read_text_file` command (`std::fs::read_to_string`) for
+reading a user-picked `.ics` file — deliberately did *not* pull in
+`tauri-plugin-fs` and fight its path-scoping ACL for this, since the path
+already comes from a trusted native file-picker dialog (same trust model as
+the App Shortcuts widget's file picker from Milestone 2).
+
+### Calendar widget — fully working today
+
+- `src/integrations/calendar/ics.ts`: a minimal RFC 5545 subset parser —
+  unfolds continuation lines, reads `VEVENT` `UID`/`SUMMARY`/`DTSTART`/
+  `DTEND`. Deliberately does **not** expand `RRULE` recurrence or convert
+  `TZID`-qualified times to the local zone — both documented as real gaps
+  below rather than silently producing wrong dates.
+- Migration v5: `calendar_events` table (`UNIQUE(uid, start_at)` so
+  re-importing the same file doesn't duplicate events).
+  `src/storage/calendarEvents.ts` — `listEventsInRange`, `importIcsEvents`
+  (uses `INSERT OR IGNORE`, returns how many were actually new).
+- `src/widgets/built-in/Calendar/Calendar.tsx` — Day/Week/Month view
+  toggle (per the original spec line), "Import .ics file" button
+  (`tauri-plugin-dialog` → `read_text_file` → `parseIcs` →
+  `importIcsEvents`), prev/next/Today navigation. Month view is a compact
+  grid with a dot on days that have events, not a full agenda — clicking a
+  day jumps to Day view for it.
+
+### Music widget — real architecture, no live data yet (by design)
+
+- `src/integrations/music/types.ts` — the unified `NowPlayingData`
+  interface exactly as specified (`title`, `artist`, `album`, `artworkUrl`,
+  `isPlaying`, `progressMs`, `durationMs`, `source`).
+- `src/integrations/music/adapters.ts` — one `MusicAdapter` factory used
+  for all four sources (Spotify, Apple Music, YouTube Music, YouTube)
+  rather than four near-identical files, since none has distinct logic
+  yet: `isConfigured()`/`saveCredential()`/`clearCredential()` all go
+  through `secureStore.ts`, and `getNowPlaying()` honestly returns `null`
+  for every source — there is no fake/mocked "now playing" data anywhere.
+- `src/widgets/built-in/Music/Music.tsx` — per-source tabs (● = credential
+  saved, ○ = not), a "not connected" placeholder card where the real
+  now-playing card will render once wired up, a credential-entry form that
+  saves to the keychain, and a link (via `openUrl`, opens in the real
+  system browser, not a webview popup) to where the user gets that
+  credential for the selected source.
+
+### What OAuth completion actually needs, per source (for whoever picks this up next)
+
+- **Spotify**: PKCE flow is fully client-side-feasible (no client secret
+  needed for a public/desktop client), but a desktop app needs to *catch*
+  the redirect after the user authorizes — that means either a custom URL
+  scheme (`tauri-plugin-deep-link`) or a temporary local loopback HTTP
+  server in Rust to receive the auth code. Neither is implemented; this is
+  the actual next chunk of work once a Spotify Developer app + client ID
+  exist.
+- **Apple Music**: needs a *paid* Apple Developer Program membership
+  ($99/yr) to generate a MusicKit private key + developer token — cannot
+  proceed at all without the user having that account.
+- **YouTube Music**: no official now-playing API; the plan (per
+  PRODUCT_SPEC.md) is Odesli polling as a fallback — not yet implemented.
+- **YouTube**: needs a Google Cloud API key (Data API v3) — simplest of
+  the four once a key exists, no OAuth redirect dance required for public
+  data.
+
+### Registry
+
+`WidgetId` grew from 14 to 16 (`calendar`, `music`), following the same
+pattern as every prior widget addition — `WidgetGrid.tsx` needed no changes.
+
+### Build verification
+
+- `npx tsc --noEmit` — clean, including the `openUrl` import guess from
+  `@tauri-apps/plugin-opener` (correct on the first try).
+- `cargo check` — clean, including the `keyring` crate integration.
+- `npm run test` — 3/3 passing.
+- `npm run tauri build -- --debug` — see repo history for this session's
+  run; same MSI/NSIS output pattern as every prior session.
+
+### Known gaps / deliberately deferred
+
+- No OAuth completion for any music source or Google Calendar — the whole
+  point of this session's scoping decision, tracked above per-source.
+- `.ics` parser doesn't expand recurring events (`RRULE`) or handle
+  `TZID` time zone conversion — both silently-wrong-data risks if not
+  flagged, so flagging them here instead of pretending they're handled.
+- Calendar's Week/Month views only show event *counts*/dots, not titles —
+  a deliberate simplification to fit widget-sized space; Day view (the
+  default) shows full titles and times.
+- No tests added for Calendar or Music (same standing gap as every widget
+  since Milestone 2 — only `Clock` and `ThemeSwitcher` have coverage).
+
+### Next up (rest of Milestone 5, then Milestone 6)
+
+Whoever has real API credentials: wire up Spotify PKCE (needs the
+redirect-capture mechanism above), Google Calendar OAuth, YouTube Data API,
+and/or Apple MusicKit. Otherwise, next unblocked work is Milestone 6 (lego
+block widget builder) or finishing Milestone 3's per-theme customisation
+UI. See [ROADMAP.md](ROADMAP.md).
