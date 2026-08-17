@@ -1,0 +1,158 @@
+.music-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.music-widget__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.music-widget__tabs button {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 999px;
+  color: var(--nb-text-muted);
+  font-size: 0.68em;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.music-widget__tabs button.is-active {
+  background: var(--nb-accent);
+  color: #0d0f16;
+  font-weight: 600;
+}
+
+.music-widget__now-playing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+}
+
+.music-widget__artwork {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background-color: var(--nb-surface);
+  background-size: cover;
+  background-position: center;
+  flex: none;
+}
+
+.music-widget__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.music-widget__title {
+  font-size: 0.85em;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-widget__artist {
+  font-size: 0.75em;
+  color: var(--nb-text-muted);
+}
+
+.music-widget__placeholder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--nb-text-muted);
+  font-size: 0.82em;
+}
+
+.music-widget__note {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--nb-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+}
+
+.music-widget__config {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: var(--nb-border-style);
+  padding-top: 8px;
+}
+
+.music-widget__configured {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78em;
+  color: var(--nb-text-muted);
+}
+
+.music-widget__configured-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.music-widget__configured-actions button {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.85em;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.music-widget__form {
+  display: flex;
+  gap: 6px;
+}
+
+.music-widget__form input {
+  flex: 1;
+  min-width: 0;
+  background: var(--nb-surface);
+  border: var(--nb-border-style);
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-family: inherit;
+  font-size: 0.8em;
+  padding: 5px 8px;
+}
+
+.music-widget__save {
+  background: var(--nb-accent);
+  color: #0d0f16;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8em;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.music-widget__setup-link {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--nb-accent);
+  font-size: 0.72em;
+  padding: 0;
+  cursor: pointer;
+}
+
+.music-widget__hint {
+  margin: 0;
+  font-size: 0.68em;
+  color: var(--nb-text-muted);
+  line-height: 1.4;
+}
