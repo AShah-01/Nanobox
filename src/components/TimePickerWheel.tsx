@@ -76,6 +76,20 @@ export function TimePickerWheel({ label, value, onChange, min = 1, max = 120 }: 
     }
   };
 
+  const handleWheelKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") {
+      e.preventDefault();
+      const newValue = Math.max(min, Math.min(max, value + 1));
+      onChange(newValue);
+    } else if (e.key === "ArrowDown" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      const newValue = Math.max(min, Math.min(max, value - 1));
+      onChange(newValue);
+    } else if (e.key === "Enter") {
+      setIsEditing(true);
+    }
+  };
+
   return (
     <div className="time-picker-wheel">
       <span className="time-picker-wheel__label">{label}</span>
@@ -84,6 +98,13 @@ export function TimePickerWheel({ label, value, onChange, min = 1, max = 120 }: 
         ref={wheelRef}
         onWheel={handleWheelChange}
         onMouseDown={handleMouseDown}
+        onKeyDown={handleWheelKeyDown}
+        tabIndex={0}
+        role="slider"
+        aria-label={`${label} time picker, ${value} minutes`}
+        aria-valuenow={value}
+        aria-valuemin={min}
+        aria-valuemax={max}
       >
         <span className="time-picker-wheel__tick" />
         <div className="time-picker-wheel__value">
