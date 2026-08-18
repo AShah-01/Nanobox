@@ -5,6 +5,8 @@ import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { TitleBar } from "./components/TitleBar";
 import { ensureAutostart } from "./core/autostart";
 import { getDb } from "./storage/db";
+import { initGlobalKeyboardNav } from "./core/keyboardNav";
+import "./core/keyboardNav.css";
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -12,6 +14,7 @@ function App() {
   useEffect(() => {
     ensureAutostart().catch((err) => console.error("autostart setup failed", err));
     getDb().catch((err) => console.error("db init failed", err));
+    initGlobalKeyboardNav();
   }, []);
 
   return (
