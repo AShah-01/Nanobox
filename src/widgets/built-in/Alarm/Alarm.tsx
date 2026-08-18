@@ -34,7 +34,9 @@ export function Alarm() {
   const [label, setLabel] = useState("");
   const [time, setTime] = useState("07:00");
   const [days, setDays] = useState<Set<string>>(new Set());
-  const [sound, setSound] = useState<AlarmSound>("chime");
+  const [sound, setSound] = useState<AlarmSound>(
+    (localStorage.getItem("settings:defaultSound") as AlarmSound) || "chime",
+  );
   const ringingRef = useRef(ringing);
   ringingRef.current = ringing;
 

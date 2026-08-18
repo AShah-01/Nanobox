@@ -9,6 +9,7 @@ import "./themes/glossy.css";
 import "./themes/retro.css";
 import "./themes/cyberpunk.css";
 import "./themes/steampunk.css";
+import "./themes/high-contrast.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

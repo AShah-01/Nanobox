@@ -50,6 +50,92 @@
   font-weight: 600;
 }
 
+.calendar-widget__quick-add-btn {
+  background: var(--nb-accent);
+  color: var(--nb-accent-text);
+  border: none;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calendar-widget__quick-add-btn:hover {
+  filter: brightness(1.1);
+}
+
+.calendar-widget__quick-add {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--nb-surface);
+  border: var(--nb-border-style);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.calendar-widget__quick-add-title,
+.calendar-widget__quick-add-row input {
+  background: var(--nb-surface-alt);
+  border: var(--nb-border-style);
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-family: inherit;
+  font-size: 0.85em;
+  padding: 5px 8px;
+}
+
+.calendar-widget__quick-add-title {
+  width: 100%;
+}
+
+.calendar-widget__quick-add-row {
+  display: flex;
+  gap: 6px;
+}
+
+.calendar-widget__quick-add-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.calendar-widget__quick-add-allday {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78em;
+  color: var(--nb-text-muted);
+  cursor: pointer;
+}
+
+.calendar-widget__quick-add-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.calendar-widget__quick-add-actions button {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.8em;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.calendar-widget__quick-add-save {
+  background: var(--nb-accent) !important;
+  color: var(--nb-accent-text) !important;
+  font-weight: 600;
+}
+
+.calendar-widget__quick-add-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .calendar-widget__status {
   margin: 0;
   font-size: 0.78em;

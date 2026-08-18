@@ -57,3 +57,33 @@ export async function getCachedCalendarEvents(
   if (!rows[0]) return null;
   return { events: JSON.parse(rows[0].event_json), cachedAt: rows[0].cached_at };
 }
+
+const LOCAL_SOURCE_NAME = "My Events";
+
+/**
+ * Local, manually-added events (quick-add) live under a single synthetic
+ * "local" source — same tables as .ics/Google, just never fetched from the
+ * network, so `refresh()` in the widget reads it straight from cache.
+ */
+export async function getOrCreateLocalSource(color: string): Promise<CalendarSource> {
+  const db = await getDb();
+  const existing = await db.select<CalendarSource[]>(
+    "SELECT * FROM calendar_sources WHERE kind = 'local' LIMIT 1",
+  );
+  if (existing[0]) return existing[0];
+
+  const id = await createCalendarSource({ kind: "local", name: LOCAL_SOURCE_NAME, color });
+  return { id, kind: "local", name: LOCAL_SOURCE_NAME, file_path: null, account_email: null, color };
+}
+
+export async function addLocalEvent(sourceId: number, event: CalendarEvent): Promise<void> {
+  const cached = await getCachedCalendarEvents(sourceId);
+  const events = [...(cached?.events ?? []), event];
+  await cacheCalendarEvents(sourceId, events);
+}
+
+export async function deleteLocalEvent(sourceId: number, eventId: string): Promise<void> {
+  const cached = await getCachedCalendarEvents(sourceId);
+  if (!cached) return;
+  await cacheCalendarEvents(sourceId, cached.events.filter((e) => e.id !== eventId));
+}

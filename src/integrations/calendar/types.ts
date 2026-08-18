@@ -13,7 +13,7 @@ export interface CalendarEvent {
   description?: string;
 }
 
-export type CalendarSourceKind = "ics" | "google";
+export type CalendarSourceKind = "ics" | "google" | "local";
 
 export interface CalendarSource {
   id: number;

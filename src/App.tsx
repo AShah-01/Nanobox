@@ -3,17 +3,27 @@ import { WidgetGrid } from "./widgets/WidgetGrid";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { TitleBar } from "./components/TitleBar";
+import { OnboardingWizard, hasCompletedOnboarding } from "./components/OnboardingWizard";
 import { ensureAutostart } from "./core/autostart";
 import { getDb } from "./storage/db";
 import { initGlobalKeyboardNav } from "./core/keyboardNav";
+import { initContrast } from "./core/contrastStore";
 import "./core/keyboardNav.css";
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
   useEffect(() => {
     ensureAutostart().catch((err) => console.error("autostart setup failed", err));
-    getDb().catch((err) => console.error("db init failed", err));
+    getDb()
+      .then(() => hasCompletedOnboarding())
+      .then(setOnboardingDone)
+      .catch((err) => {
+        console.error("db init failed", err);
+        setOnboardingDone(true); // fail open — don't block the app on a broken DB
+      });
+    initContrast().catch((err) => console.error("contrast init failed", err));
     initGlobalKeyboardNav();
   }, []);
 
@@ -21,8 +31,16 @@ function App() {
     <main className="overlay">
       <TitleBar onSettingsClick={() => setSettingsOpen(true)} />
       <div className="overlay__body">
-        <WidgetGrid />
-        <ThemeSwitcher />
+        {onboardingDone === false ? (
+          <OnboardingWizard onComplete={() => setOnboardingDone(true)} />
+        ) : (
+          onboardingDone && (
+            <>
+              <WidgetGrid />
+              <ThemeSwitcher />
+            </>
+          )
+        )}
         <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       </div>
     </main>

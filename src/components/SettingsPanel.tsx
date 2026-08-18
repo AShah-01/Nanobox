@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { THEMES } from "../themes/themes";
 import { getTheme, setTheme } from "../core/themeStore";
+import { isHighContrast, setHighContrast } from "../core/contrastStore";
+import { playTone } from "../widgets/built-in/Alarm/tones";
+import type { AlarmSound } from "../storage/alarms";
 import "./SettingsPanel.css";
+
+const SOUND_LABELS: Record<AlarmSound, string> = { chime: "Chime", beep: "Beep", digital: "Digital" };
 
 interface SettingsPanelProps {
   open: boolean;
@@ -14,6 +19,10 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const [fontSize, setFontSize] = useState(parseFloat(localStorage.getItem("settings:fontSize") || "1"));
   const [opacity, setOpacity] = useState(parseFloat(localStorage.getItem("settings:opacity") || "1"));
   const [autostart, setAutostart] = useState(localStorage.getItem("settings:autostart") === "true");
+  const [highContrast, setHighContrastLocal] = useState(isHighContrast());
+  const [defaultSound, setDefaultSound] = useState<AlarmSound>(
+    (localStorage.getItem("settings:defaultSound") as AlarmSound) || "chime",
+  );
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,10 +38,12 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 
   function saveSettings() {
     setTheme(theme);
+    setHighContrast(highContrast);
     localStorage.setItem("settings:accentColor", accentColor);
     localStorage.setItem("settings:fontSize", fontSize.toString());
     localStorage.setItem("settings:opacity", opacity.toString());
     localStorage.setItem("settings:autostart", autostart.toString());
+    localStorage.setItem("settings:defaultSound", defaultSound);
     document.documentElement.style.setProperty("--nb-accent", accentColor);
     document.documentElement.style.setProperty("font-size", `${fontSize * 100}%`);
     document.documentElement.style.setProperty("opacity", opacity.toString());
@@ -45,6 +56,8 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     setFontSize(1);
     setOpacity(1);
     setAutostart(false);
+    setHighContrastLocal(false);
+    setDefaultSound("chime");
   }
 
   if (!open) return null;
@@ -156,6 +169,56 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 />
                 <span className="toggle-switch__slider" />
               </label>
+            </div>
+          </div>
+
+          {/* High Contrast Toggle */}
+          <div className="settings-section">
+            <div className="settings-section__row">
+              <label htmlFor="high-contrast" className="settings-section__label">
+                High contrast mode
+              </label>
+              <label className="toggle-switch">
+                <input
+                  id="high-contrast"
+                  type="checkbox"
+                  checked={highContrast}
+                  onChange={(e) => setHighContrastLocal(e.target.checked)}
+                  className="toggle-switch__input"
+                />
+                <span className="toggle-switch__slider" />
+              </label>
+            </div>
+          </div>
+
+          {/* Default Notification Sound */}
+          <div className="settings-section">
+            <div className="settings-section__row">
+              <label htmlFor="default-sound" className="settings-section__label">
+                Default notification sound
+              </label>
+              <div className="sound-picker">
+                <select
+                  id="default-sound"
+                  value={defaultSound}
+                  onChange={(e) => setDefaultSound(e.target.value as AlarmSound)}
+                >
+                  {(Object.keys(SOUND_LABELS) as AlarmSound[]).map((s) => (
+                    <option key={s} value={s}>
+                      {SOUND_LABELS[s]}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="sound-picker__preview"
+                  onClick={() => playTone(defaultSound)}
+                  aria-label="Preview sound"
+                  title="Preview sound"
+                >
+                  ▶
+                </button>
+              </div>
             </div>
           </div>
         </div>

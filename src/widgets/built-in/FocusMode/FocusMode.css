@@ -108,6 +108,49 @@
   gap: 20px;
 }
 
+.focus-widget__settings-sound {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.focus-widget__settings-sound-label {
+  font-size: 0.75em;
+  font-weight: 600;
+  color: var(--nb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.focus-widget__settings-sound-row {
+  display: flex;
+  gap: 6px;
+}
+
+.focus-widget__settings-sound-row select {
+  flex: 1;
+  background: var(--nb-surface);
+  border: var(--nb-border-style);
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.85em;
+  padding: 5px 8px;
+}
+
+.focus-widget__settings-sound-preview {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.8em;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.focus-widget__settings-sound-preview:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .focus-widget__settings-actions {
   display: flex;
   gap: 8px;

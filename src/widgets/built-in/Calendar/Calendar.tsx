@@ -13,10 +13,12 @@ import {
 } from "../../../integrations/calendar/google";
 import { addDays, addMonths, startOfDay } from "../../../integrations/calendar/dateUtils";
 import {
+  addLocalEvent,
   cacheCalendarEvents,
   createCalendarSource,
   deleteCalendarSource,
   getCachedCalendarEvents,
+  getOrCreateLocalSource,
   listCalendarSources,
 } from "../../../storage/calendar";
 import { getSetting, setSetting } from "../../../storage/settings";
@@ -42,6 +44,12 @@ export function Calendar() {
   const [clientIdInput, setClientIdInput] = useState("");
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickTitle, setQuickTitle] = useState("");
+  const [quickDate, setQuickDate] = useState(() => startOfDay(new Date()).toISOString().slice(0, 10));
+  const [quickTime, setQuickTime] = useState("09:00");
+  const [quickAllDay, setQuickAllDay] = useState(false);
+  const [savingQuickAdd, setSavingQuickAdd] = useState(false);
 
   const rangeStart = useMemo(() => addDays(startOfDay(new Date()), -WINDOW_PAST_DAYS), []);
   const rangeEnd = useMemo(() => addDays(startOfDay(new Date()), WINDOW_FUTURE_DAYS), []);
@@ -56,6 +64,12 @@ export function Calendar() {
     const all: CalendarEvent[] = [];
 
     for (const source of srcs) {
+      if (source.kind === "local") {
+        // Manually-added events — never fetched over the network, just read straight from cache.
+        const cached = await getCachedCalendarEvents(source.id);
+        if (cached) all.push(...cached.events);
+        continue;
+      }
       try {
         let fresh: CalendarEvent[];
         if (source.kind === "ics") {
@@ -125,6 +139,35 @@ export function Calendar() {
     }
   }
 
+  async function submitQuickAdd() {
+    const title = quickTitle.trim();
+    if (!title) return;
+    setSavingQuickAdd(true);
+    try {
+      const color = SOURCE_COLORS[sources.length % SOURCE_COLORS.length];
+      const localSource = await getOrCreateLocalSource(color);
+      const startDate = quickAllDay ? new Date(`${quickDate}T00:00:00`) : new Date(`${quickDate}T${quickTime}:00`);
+      const endDate = quickAllDay ? addDays(startDate, 1) : new Date(startDate.getTime() + 60 * 60_000);
+      const event: CalendarEvent = {
+        id: `${localSource.id}:local:${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+        sourceId: localSource.id,
+        title,
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+        allDay: quickAllDay,
+      };
+      await addLocalEvent(localSource.id, event);
+      setQuickTitle("");
+      setShowQuickAdd(false);
+      await refresh();
+    } catch (err) {
+      console.error("quick-add event failed", err);
+      setError(err instanceof Error ? err.message : "failed to add event");
+    } finally {
+      setSavingQuickAdd(false);
+    }
+  }
+
   async function removeSource(source: CalendarSource) {
     if (source.kind === "google") await disconnectGoogleCalendar();
     await deleteCalendarSource(source.id);
@@ -168,7 +211,47 @@ export function Calendar() {
               </button>
             ))}
           </div>
+          <button
+            className="calendar-widget__quick-add-btn"
+            onClick={() => setShowQuickAdd((v) => !v)}
+            aria-haspopup="true"
+            aria-expanded={showQuickAdd}
+            aria-label="Quick-add event"
+            title="Quick-add event"
+          >
+            + Event
+          </button>
         </div>
+
+        {showQuickAdd && (
+          <div className="calendar-widget__quick-add" data-no-drag>
+            <input
+              className="calendar-widget__quick-add-title"
+              placeholder="Event title"
+              value={quickTitle}
+              onChange={(e) => setQuickTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitQuickAdd();
+                if (e.key === "Escape") setShowQuickAdd(false);
+              }}
+              autoFocus
+            />
+            <div className="calendar-widget__quick-add-row">
+              <input type="date" value={quickDate} onChange={(e) => setQuickDate(e.target.value)} />
+              {!quickAllDay && <input type="time" value={quickTime} onChange={(e) => setQuickTime(e.target.value)} />}
+            </div>
+            <label className="calendar-widget__quick-add-allday">
+              <input type="checkbox" checked={quickAllDay} onChange={(e) => setQuickAllDay(e.target.checked)} />
+              All day
+            </label>
+            <div className="calendar-widget__quick-add-actions">
+              <button onClick={() => setShowQuickAdd(false)}>Cancel</button>
+              <button className="calendar-widget__quick-add-save" disabled={!quickTitle.trim() || savingQuickAdd} onClick={submitQuickAdd}>
+                {savingQuickAdd ? "Adding…" : "Add"}
+              </button>
+            </div>
+          </div>
+        )}
 
         {degraded && (
           <p className="calendar-widget__status">

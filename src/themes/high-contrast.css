@@ -1,0 +1,68 @@
+/*
+ * High contrast overlay — applies on top of any of the 6 themes via
+ * [data-contrast="high"] on <html>, alongside the existing data-theme.
+ * Strategy: raise text/border contrast to WCAG AA+ and strip decorative
+ * overlays (scanlines, noise, gear texture, glow) that reduce legibility,
+ * rather than hand-tuning six separate high-contrast palettes.
+ */
+
+/*
+ * :root[data-contrast="high"] — matches the specificity of the theme rules
+ * (:root[data-theme="..."]) so this override actually wins the cascade
+ * instead of losing to whichever theme is active.
+ */
+:root[data-contrast="high"] {
+  --nb-text-muted: var(--nb-text);
+  --nb-border-style: 2px solid var(--nb-text);
+}
+
+[data-contrast="high"] * {
+  text-shadow: none !important;
+  animation: none !important;
+}
+
+[data-contrast="high"] .widget-frame {
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+[data-contrast="high"] .widget-frame::after,
+[data-contrast="high"] .widget-frame::before {
+  display: none !important;
+}
+
+[data-contrast="high"] :focus-visible {
+  outline: 3px solid var(--nb-accent);
+  outline-offset: 3px;
+}
+
+[data-contrast="high"].keyboard-focus :focus,
+[data-contrast="high"] .keyboard-focus :focus {
+  outline: 3px solid var(--nb-accent) !important;
+  outline-offset: 3px !important;
+}
+
+[data-contrast="high"] button,
+[data-contrast="high"] input,
+[data-contrast="high"] select,
+[data-contrast="high"] textarea {
+  border: 1px solid var(--nb-text-muted);
+}
+
+/*
+ * Theme-specific low-contrast accents that need a stronger swap under high
+ * contrast. `:root[...]` prefix again so these reliably outrank the base
+ * theme rule regardless of stylesheet import order.
+ */
+:root[data-theme="retro"][data-contrast="high"] {
+  --nb-text-muted: #33ff66;
+}
+
+:root[data-theme="cyberpunk"][data-contrast="high"] {
+  --nb-text-muted: #f2f2ff;
+}
+
+:root[data-theme="liquid-glass"][data-contrast="high"] {
+  --nb-surface-alt: #05060a;
+  --nb-text: #ffffff;
+}

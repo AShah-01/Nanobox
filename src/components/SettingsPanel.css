@@ -120,6 +120,35 @@
   font-weight: 500;
 }
 
+.sound-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sound-picker select {
+  background: var(--nb-surface);
+  border: var(--nb-border-style);
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.85em;
+  padding: 6px 8px;
+}
+
+.sound-picker__preview {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  color: var(--nb-text);
+  font-size: 0.8em;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.sound-picker__preview:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .color-picker {
   display: flex;
   align-items: center;
