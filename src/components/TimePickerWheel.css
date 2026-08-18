@@ -1,0 +1,96 @@
+.time-picker-wheel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.time-picker-wheel__label {
+  font-size: 0.75em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--nb-text-muted);
+}
+
+.time-picker-wheel__dial {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+}
+
+.time-picker-wheel__dial:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.time-picker-wheel__dial.is-dragging {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--nb-accent);
+  box-shadow: 0 0 12px rgba(124, 156, 255, 0.3);
+  cursor: grabbing;
+}
+
+.time-picker-wheel__tick {
+  position: absolute;
+  top: 10px;
+  width: 2px;
+  height: 12px;
+  background: var(--nb-accent);
+  border-radius: 1px;
+}
+
+.time-picker-wheel__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-picker-wheel__display {
+  font-size: 1.8em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--nb-text);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s ease-out;
+}
+
+.time-picker-wheel__display:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.time-picker-wheel__input {
+  font-size: 1.8em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid var(--nb-accent);
+  border-radius: 6px;
+  color: var(--nb-text);
+  text-align: center;
+  width: 70px;
+  padding: 4px;
+}
+
+.time-picker-wheel__input:focus {
+  outline: none;
+  box-shadow: 0 0 8px rgba(124, 156, 255, 0.4);
+}
+
+.time-picker-wheel__unit {
+  font-size: 0.65em;
+  color: var(--nb-text-muted);
+  font-weight: 500;
+}

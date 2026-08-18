@@ -69,3 +69,72 @@
   font-size: 0.72em;
   color: var(--nb-text-muted);
 }
+
+.focus-widget__btn--settings {
+  font-size: 0.9em;
+  padding: 6px 10px;
+  width: 32px;
+  height: auto;
+}
+
+.focus-widget__settings {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 12px;
+  background: var(--nb-surface-alt);
+  border: var(--nb-border-style);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 280px;
+}
+
+.focus-widget__settings-title {
+  margin: 0;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--nb-text);
+}
+
+.focus-widget__settings-content {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+}
+
+.focus-widget__settings-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.focus-widget__settings-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 8px;
+  color: var(--nb-text);
+  font-size: 0.8em;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease-out;
+}
+
+.focus-widget__settings-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.focus-widget__settings-btn--primary {
+  background: var(--nb-accent);
+  color: var(--nb-accent-text);
+  font-weight: 600;
+}
+
+.focus-widget__settings-btn--primary:hover {
+  filter: brightness(1.1);
+}

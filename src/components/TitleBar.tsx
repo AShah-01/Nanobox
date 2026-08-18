@@ -5,6 +5,10 @@ import "./TitleBar.css";
 
 const win = getCurrentWindow();
 
+interface TitleBarProps {
+  onSettingsClick?: () => void;
+}
+
 /**
  * Custom drag handle + window controls for the borderless overlay window
  * (decorations: false, by design, for the transparent widget-canvas look —
@@ -18,7 +22,7 @@ const win = getCurrentWindow();
  * robust pattern Tauri's own custom-title-bar examples use, especially once
  * the bar also has buttons that must NOT start a drag.
  */
-export function TitleBar() {
+export function TitleBar({ onSettingsClick }: TitleBarProps) {
   const [maximized, setMaximized] = useState(false);
 
   useEffect(() => {
@@ -44,6 +48,14 @@ export function TitleBar() {
         <span>Nanobox</span>
       </div>
       <div className="title-bar__controls" data-no-drag>
+        <button
+          className="title-bar__btn"
+          onClick={onSettingsClick}
+          aria-label="Settings"
+          title="Open settings"
+        >
+          ⚙️
+        </button>
         <button
           className="title-bar__btn"
           onClick={() => win.minimize().catch((err) => console.error("failed to minimize window", err))}

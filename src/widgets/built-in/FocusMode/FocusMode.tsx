@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { sendNotification } from "@tauri-apps/plugin-notification";
 import { WidgetFrame } from "../../../components/WidgetFrame";
+import { TimePickerWheel } from "../../../components/TimePickerWheel";
 import { setHideOthers } from "../../../core/focusModeStore";
 import "./FocusMode.css";
 
-const WORK_MINUTES = 25;
-const BREAK_MINUTES = 5;
+const DEFAULT_WORK_MINUTES = 25;
+const DEFAULT_BREAK_MINUTES = 5;
 
 type Phase = "work" | "break";
 
@@ -18,11 +19,29 @@ function formatTime(totalSeconds: number) {
 }
 
 export function FocusMode() {
+  const [workMinutes, setWorkMinutes] = useState(DEFAULT_WORK_MINUTES);
+  const [breakMinutes, setBreakMinutes] = useState(DEFAULT_BREAK_MINUTES);
   const [phase, setPhase] = useState<Phase>("work");
-  const [secondsLeft, setSecondsLeft] = useState(WORK_MINUTES * 60);
+  const [secondsLeft, setSecondsLeft] = useState(DEFAULT_WORK_MINUTES * 60);
   const [running, setRunning] = useState(false);
   const [cycles, setCycles] = useState(0);
   const [hideOthersChecked, setHideOthersChecked] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("focusMode:times");
+    if (saved) {
+      try {
+        const { work, break: brk } = JSON.parse(saved);
+        setWorkMinutes(work);
+        setBreakMinutes(brk);
+        setSecondsLeft(work * 60);
+      } catch (e) {
+        console.error("Failed to load focus times", e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!running) return;
@@ -37,11 +56,11 @@ export function FocusMode() {
         });
         if (phase === "work") setCycles((c) => c + 1);
         setPhase(nextPhase);
-        return (nextPhase === "work" ? WORK_MINUTES : BREAK_MINUTES) * 60;
+        return (nextPhase === "work" ? workMinutes : breakMinutes) * 60;
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [running, phase]);
+  }, [running, phase, workMinutes, breakMinutes]);
 
   useEffect(() => {
     setHideOthers(running && phase === "work" && hideOthersChecked);
@@ -51,8 +70,24 @@ export function FocusMode() {
   function reset() {
     setRunning(false);
     setPhase("work");
-    setSecondsLeft(WORK_MINUTES * 60);
+    setSecondsLeft(workMinutes * 60);
   }
+
+  function saveTimes() {
+    localStorage.setItem("focusMode:times", JSON.stringify({ work: workMinutes, break: breakMinutes }));
+    setShowSettings(false);
+  }
+
+  useEffect(() => {
+    if (!showSettings) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setShowSettings(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showSettings]);
 
   return (
     <WidgetFrame title="Focus Mode">
@@ -66,12 +101,37 @@ export function FocusMode() {
           <button className="focus-widget__btn" onClick={reset}>
             Reset
           </button>
+          <button
+            className="focus-widget__btn focus-widget__btn--settings"
+            onClick={() => setShowSettings((s) => !s)}
+            title="Adjust focus and break times"
+          >
+            ⚙️
+          </button>
         </div>
         <label className="focus-widget__toggle">
           <input type="checkbox" checked={hideOthersChecked} onChange={(e) => setHideOthersChecked(e.target.checked)} />
           Hide other widgets while focusing
         </label>
         <span className="focus-widget__cycles">{cycles} cycle{cycles === 1 ? "" : "s"} completed</span>
+
+        {showSettings && (
+          <div className="focus-widget__settings" ref={settingsRef}>
+            <h3 className="focus-widget__settings-title">Adjust Times</h3>
+            <div className="focus-widget__settings-content">
+              <TimePickerWheel label="Work" value={workMinutes} onChange={setWorkMinutes} min={1} max={120} />
+              <TimePickerWheel label="Break" value={breakMinutes} onChange={setBreakMinutes} min={1} max={60} />
+            </div>
+            <div className="focus-widget__settings-actions">
+              <button className="focus-widget__settings-btn focus-widget__settings-btn--primary" onClick={saveTimes}>
+                Save
+              </button>
+              <button className="focus-widget__settings-btn" onClick={() => setShowSettings(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </WidgetFrame>
   );

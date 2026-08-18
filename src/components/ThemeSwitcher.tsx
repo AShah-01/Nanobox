@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getTheme, initTheme, setTheme, subscribeTheme } from "../core/themeStore";
 import { THEMES } from "../themes/themes";
 import "./ThemeSwitcher.css";
@@ -7,14 +7,26 @@ import "./ThemeSwitcher.css";
 export function ThemeSwitcher() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(getTheme());
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     initTheme().catch((err) => console.error("theme init failed", err));
     return subscribeTheme(() => setActive(getTheme()));
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
   return (
-    <div className="theme-switcher">
+    <div className="theme-switcher" ref={containerRef}>
       <button
         className="theme-switcher__btn"
         onClick={() => setOpen((v) => !v)}
