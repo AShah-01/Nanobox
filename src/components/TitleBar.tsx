@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow, type Window as TauriWindow } from "@tauri-apps/api/window";
 import logoMark from "../assets/logo/nanobox-mark.svg";
 import "./TitleBar.css";
 
-const win = getCurrentWindow();
+let win: TauriWindow | null;
+try {
+  win = getCurrentWindow();
+} catch {
+  win = null;
+}
 
 interface TitleBarProps {
   onSettingsClick?: () => void;
@@ -26,6 +31,7 @@ export function TitleBar({ onSettingsClick }: TitleBarProps) {
   const [maximized, setMaximized] = useState(false);
 
   useEffect(() => {
+    if (!win) return;
     win.isMaximized().then(setMaximized);
     const unlisten = win.onResized(() => {
       win.isMaximized().then(setMaximized);
@@ -36,6 +42,7 @@ export function TitleBar({ onSettingsClick }: TitleBarProps) {
   }, []);
 
   function startDrag(e: React.PointerEvent) {
+    if (!win) return;
     if (e.button !== 0) return;
     if ((e.target as HTMLElement).closest("[data-no-drag]")) return;
     win.startDragging().catch((err) => console.error("failed to start window drag", err));
@@ -56,30 +63,34 @@ export function TitleBar({ onSettingsClick }: TitleBarProps) {
         >
           ⚙️
         </button>
-        <button
-          className="title-bar__btn"
-          onClick={() => win.minimize().catch((err) => console.error("failed to minimize window", err))}
-          aria-label="Minimize"
-          title="Minimize to taskbar"
-        >
-          &#8211;
-        </button>
-        <button
-          className="title-bar__btn"
-          onClick={() => win.toggleMaximize().catch((err) => console.error("failed to toggle maximize", err))}
-          aria-label={maximized ? "Restore" : "Maximize"}
-          title={maximized ? "Restore" : "Maximize"}
-        >
-          {maximized ? "❐" : "☐"}
-        </button>
-        <button
-          className="title-bar__btn title-bar__btn--close"
-          onClick={() => win.hide().catch((err) => console.error("failed to hide window", err))}
-          aria-label="Close"
-          title="Close (hides to tray — use the tray icon's Quit to actually exit)"
-        >
-          &#215;
-        </button>
+        {win && (
+          <>
+            <button
+              className="title-bar__btn"
+              onClick={() => win.minimize().catch((err) => console.error("failed to minimize window", err))}
+              aria-label="Minimize"
+              title="Minimize to taskbar"
+            >
+              &#8211;
+            </button>
+            <button
+              className="title-bar__btn"
+              onClick={() => win.toggleMaximize().catch((err) => console.error("failed to toggle maximize", err))}
+              aria-label={maximized ? "Restore" : "Maximize"}
+              title={maximized ? "Restore" : "Maximize"}
+            >
+              {maximized ? "❐" : "☐"}
+            </button>
+            <button
+              className="title-bar__btn title-bar__btn--close"
+              onClick={() => win.hide().catch((err) => console.error("failed to hide window", err))}
+              aria-label="Close"
+              title="Close (hides to tray — use the tray icon's Quit to actually exit)"
+            >
+              &#215;
+            </button>
+          </>
+        )}
       </div>
     </header>
   );
