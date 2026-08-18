@@ -1187,3 +1187,123 @@ as accurate history rather than one overwriting the other.
 `claude/milestone-5-8d2pih` gets deleted once this lands and is confirmed
 on `main` — its work no longer lives only there. Next unclaimed milestone
 is 7, the lego-block widget builder. See [ROADMAP.md](ROADMAP.md).
+
+## Session 9 — 2026-08-18 — Milestone 7: block engine execution [CEO-approved]
+
+**Context found at session start**: three commits landed on `main` directly
+between this file's Session 8 and tonight (`d0afe0a`, `ed0aced`, `72e2a5b`,
+plus a `SPRINT_SUMMARY.md` doc at `1cd10f8`) outside the branch → PR → CI
+workflow every prior session used, and without a PROGRESS.md entry. They
+added the Settings panel, Focus Mode time picker, global keyboard nav, and
+a Block Engine "foundation" (AST types + evaluator + a 22-block standard
+library). `npx tsc --noEmit` and `npm run test` were clean on `main` as
+pulled, so none of it was left broken — but `SPRINT_SUMMARY.md`'s own
+"QA SIGN-OFF: Feature completeness: All requirements met" and "Ready for
+beta testing" for the Block Engine were not accurate: `evaluator.ts`'s
+`executeBlock` was a literal no-op placeholder (`return { success: true,
+value: undefined, outputPortValues: {} }` for every block, unconditionally)
+with zero tests. Flagging this rather than quietly fixing it and moving on,
+since "ready for beta" claims should be verifiable, not just asserted.
+`SPRINT_SUMMARY.md` itself is left as-is (historical record of that
+session), not rewritten.
+
+### What was built
+
+Milestone 7's first ROADMAP bullet ("Block engine AST: nodes, edges, port
+types, evaluation order") implies blocks actually *evaluate* — they didn't.
+This session made `executeBlock` real for all 22 blocks currently
+registered in `blockLibrary.ts` (`src/integrations/blockEngine/evaluator.ts`):
+
+- **Display** (`show-text`/`show-number`/`show-image`/`progress-bar`):
+  passthrough/normalize, `progress-bar` clamps to 0–100.
+- **Logic** (`if-else`/`compare`/`boolean-and`/`boolean-or`): `compare`
+  reads its operator (`==`/`!=`/`<`/`>`/`<=`/`>=`) from `BlockNode.config`,
+  defaulting to `==`; `if-else` is dataflow-gated (outputs `true`/`false`
+  booleans) since the current port schema has no `then`/`else` value
+  inputs to route — documented as a known scope gap below, not silently
+  redesigned mid-session.
+- **Transform** (`format-text`/`math-op`/`date-format`/`join-strings`):
+  `format-text` does `{0}`/`{1}`-indexed substitution, `math-op` reads its
+  operator from config the same way `compare` does, `date-format` is a
+  small hand-rolled `YYYY`/`MM`/`DD`/`HH`/`mm`/`ss` token replacer (no new
+  date-library dependency for four tokens).
+- **Data** (`get-current-time` is pure — `new Date().toISOString()`;
+  `get-now-playing`/`get-note` need live app state).
+- **Actions** (`play-sound`/`send-notification`/`open-app`/`set-alarm`)
+  and the two non-timer triggers (`on-calendar-event`/`on-music-change`)
+  need the OS or SQLite.
+
+For the last two groups, added an `ExecutionBridge` interface
+(`types.ts`) — a small set of optional async functions
+(`getNowPlaying`/`getNote`/`getNextCalendarEvent`/`playSound`/
+`sendNotification`/`openApp`/`setAlarm`) that `ExecutionContext` now
+carries and `executeBlock` calls into instead of reaching for Tauri/DB
+APIs directly. `evaluateProgram()` takes an optional `bridge` parameter
+(defaults to `NULL_BRIDGE = {}`). This keeps `evaluator.ts` itself free of
+Tauri imports — it now unit-tests headlessly with plain Vitest, the same
+way `rrule.ts`/`ics.ts` do — while still giving those six blocks a real
+implementation to run against once something instantiates a bridge. Wrote
+that real implementation too, `src/integrations/blockEngine/bridge.ts`
+(`liveBridge`), wiring to `storage/notes.ts`, `storage/music.ts`,
+`storage/calendar.ts`, `storage/alarms.ts`, and the notification/opener
+Tauri plugins already used elsewhere in the app (`GentleReminders.tsx`,
+`AppShortcuts.tsx`) — no new plugins added. `liveBridge` isn't wired to
+anything yet since there's no block widget renderer to call it from; that
+is next up.
+
+Trigger blocks are evaluated as a one-shot pull of current state
+(`on-timer` returns `Date.now()`, the other two return the bridge's
+current snapshot) rather than a real interval/event push — a real
+scheduler belongs to the eventual block widget renderer's runtime loop,
+not the AST evaluator, and is out of scope here.
+
+### Tests
+
+New `tests/integrations/blockEngine.test.ts` — 15 tests: `validateProgram`
+(missing root, unregistered block, bad port reference, type-mismatched
+edge, valid single-node program) and `evaluateProgram` (data→display edge
+chaining, progress-bar clamping, compare/and/or with real value
+propagation through wired edges — not just default-value paths — math-op,
+format-text, join-strings, an action block failing cleanly with no bridge
+configured, an action block correctly invoking an injected bridge, and the
+invalid-program error path not throwing). Total suite: 29/29 passing (was
+14/14 before this session).
+
+### Build verification
+
+- `npx tsc --noEmit` — clean.
+- `npm run test` — 29/29 passing.
+- `npm run build` (`tsc && vite build`) — succeeds, 295 KB JS bundle.
+- `cargo check` (`src-tauri/`) — same standing environment gap as every
+  session since 3: this sandbox is missing the Linux GTK/GDK system
+  libraries (`gdk-3.0` via pkg-config), so `gdk-sys`'s build script fails
+  before reaching any app code. Not run here; the `windows-latest`/
+  `macos-latest` CI matrix on the PR is the real check, same as always.
+
+### Known gaps / deliberately deferred
+
+- No visual canvas yet — programs can only be constructed by hand-building
+  a `BlockProgram` object (as the tests do). React Flow integration, a
+  block palette, and drag/connect UI are all still open — this was
+  correctly the single largest remaining item and didn't fit in the same
+  session as fixing the evaluator; attempting both would have meant an
+  untested canvas sitting on top of an unverified evaluator.
+- No block widget renderer — nothing yet runs a `BlockProgram` as a live
+  desktop widget or calls `liveBridge` in anger.
+- `if-else`'s dataflow-only shape (no `then`/`else` value ports) limits
+  what it can actually express; revisit the port schema once the visual
+  canvas makes it obvious what real programs need from a branch block.
+- Custom block creator (sandboxed JS body editor) and `.nanowidget`
+  export/import: not started.
+- `liveBridge`'s calendar/music reads are best-effort synchronous
+  snapshots of the existing cache tables — inherits every gap already
+  documented for Calendar/Music in Milestone 5 (no BYDAY RRULE support,
+  three music providers unimplemented, etc.) since it reads the same
+  storage those widgets do.
+
+### Next up
+
+Visual canvas (React Flow) is the natural next slice — it's the only way
+a person actually builds a block program, and it's what the next session
+should spend its budget on rather than starting the block widget renderer
+or custom block creator first. See [ROADMAP.md](ROADMAP.md) Milestone 7.

@@ -72,4 +72,25 @@ export interface ExecutionContext {
   nodeValues: Map<string, EvalResult>; // node.id -> result
   depth: number; // Recursion tracking
   maxDepth?: number; // Prevent infinite loops
+  bridge: ExecutionBridge;
 }
+
+/**
+ * Everything a block program needs from the outside world (OS/DB/live app
+ * state) goes through this seam. Keeps the evaluator itself pure and
+ * testable without a Tauri runtime — a widget renderer supplies a real
+ * bridge; tests and the default bridge no-op or reject cleanly instead of
+ * silently pretending to succeed.
+ */
+export interface ExecutionBridge {
+  getNowPlaying?: () => Promise<{ track?: string; artist?: string; album?: string } | null>;
+  getNote?: (noteId: string) => Promise<string | null>;
+  getNextCalendarEvent?: () => Promise<{ id?: string; title?: string } | null>;
+  playSound?: (file: string) => Promise<void>;
+  sendNotification?: (title: string, body: string) => Promise<void>;
+  openApp?: (appPath: string) => Promise<void>;
+  setAlarm?: (time: string, label: string) => Promise<void>;
+}
+
+/** Bridge used when none is supplied: read-only blocks return null/empty, action blocks fail explicitly. */
+export const NULL_BRIDGE: ExecutionBridge = {};
