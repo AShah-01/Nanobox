@@ -171,14 +171,21 @@ real but narrower security boundary (iframe `sandbox="allow-scripts"`, no
 has no visual block editor, no typed ports, no block library. This
 milestone replaces it with the actual designed system:
 
-- Block engine AST: nodes, edges, port types, evaluation order
-- Visual canvas (React Flow) with premade block categories: Data, Display,
+- [x] Block engine AST: nodes, edges, port types, evaluation order
+      (`src/integrations/blockEngine/types.ts`, `evaluator.ts`) — includes
+      real per-block execution (all 22 registered blocks in
+      `blockLibrary.ts` now do something; see PROGRESS.md session 9),
+      not just the AST shape
+- [ ] Visual canvas (React Flow) with premade block categories: Data, Display,
   Logic, Sound, Interaction
-- Custom block creator: named inputs (text/number/colour/boolean) + sandboxed
+- [ ] Custom block creator: named inputs (text/number/colour/boolean) + sandboxed
   JS body editor (Compartment/ShadowRealm — no `window`/`document`/`fetch`/
   Tauri API access; all external calls via a whitelisted bridge API)
-- Widget export/import as `.nanowidget` (JSON schema + base64 block code)
-- Block widget renderer: run a block program as a live desktop widget
+- [ ] Widget export/import as `.nanowidget` (JSON schema + base64 block code)
+- [ ] Block widget renderer: run a block program as a live desktop widget
+
+See [PROGRESS.md](PROGRESS.md) session 9 for what's implemented vs. still
+missing before this milestone is usable end-to-end.
 
 ## Milestone 8 — Polish & release
 
