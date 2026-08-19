@@ -1,0 +1,19 @@
+/* Nord — arctic, cool and muted. Polar-night darks, snow-storm text, frost-blue accent. */
+:root[data-theme="nord"] {
+  --nb-surface: #2e3440;
+  --nb-surface-alt: #3b4252;
+  --nb-text: #eceff4;
+  --nb-text-muted: #b6c0d0;
+  --nb-accent: #88c0d0;
+  --nb-accent-text: #0d0f16;
+  --nb-radius: 8px;
+  --nb-border-style: 1px solid rgba(236, 239, 244, 0.14);
+  --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nb-font-scale: 1;
+}
+
+[data-theme="nord"] .widget-frame {
+  box-shadow:
+    inset 0 1px 0 rgba(236, 239, 244, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.25);
+}

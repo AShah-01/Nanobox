@@ -1,0 +1,17 @@
+/* Solarized Dark — the famously low-contrast, eye-friendly palette. Keep it gentle, don't over-brighten. */
+:root[data-theme="solarized"] {
+  --nb-surface: #002b36;
+  --nb-surface-alt: #073642;
+  --nb-text: #93a1a1;
+  --nb-text-muted: #6f8585;
+  --nb-accent: #268bd2;
+  --nb-accent-text: #f5f5f5;
+  --nb-radius: 6px;
+  --nb-border-style: 1px solid rgba(131, 148, 150, 0.25);
+  --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nb-font-scale: 1;
+}
+
+[data-theme="solarized"] .widget-frame {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}

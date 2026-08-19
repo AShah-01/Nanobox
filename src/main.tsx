@@ -9,6 +9,17 @@ import "./themes/glossy.css";
 import "./themes/retro.css";
 import "./themes/cyberpunk.css";
 import "./themes/steampunk.css";
+import "./themes/standard.css";
+import "./themes/nord.css";
+import "./themes/dracula.css";
+import "./themes/solarized.css";
+import "./themes/forest.css";
+import "./themes/ocean.css";
+import "./themes/sunset.css";
+import "./themes/monochrome.css";
+import "./themes/cotton-candy.css";
+import "./themes/industrial.css";
+import "./themes/galaxy.css";
 import "./themes/high-contrast.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

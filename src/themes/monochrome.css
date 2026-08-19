@@ -1,0 +1,15 @@
+/* Monochrome — pure grayscale, no hue at all, genuinely colourless and high-contrast. */
+:root[data-theme="monochrome"] {
+  --nb-surface: #1a1a1a;
+  --nb-surface-alt: #262626;
+  --nb-text: #f0f0f0;
+  --nb-text-muted: #8a8a8a;
+  --nb-accent: #d0d0d0;
+  --nb-accent-text: #0d0f16;
+  --nb-radius: 4px;
+  --nb-border-style: 1px solid rgba(240, 240, 240, 0.18);
+  --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nb-font-scale: 1;
+}
+
+/* No decorative flourish — deliberately colourless. */

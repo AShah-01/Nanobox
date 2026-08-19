@@ -1,0 +1,19 @@
+/* Dracula — the well-known editor palette. High-contrast dark, purple-forward. */
+:root[data-theme="dracula"] {
+  --nb-surface: #282a36;
+  --nb-surface-alt: #44475a;
+  --nb-text: #f8f8f2;
+  --nb-text-muted: #8a94c7;
+  --nb-accent: #bd93f9;
+  --nb-accent-text: #0d0f16;
+  --nb-radius: 8px;
+  --nb-border-style: 1px solid rgba(248, 248, 242, 0.12);
+  --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nb-font-scale: 1;
+}
+
+[data-theme="dracula"] .widget-frame {
+  box-shadow:
+    0 0 0 1px rgba(255, 121, 198, 0.12),
+    0 3px 10px rgba(0, 0, 0, 0.35);
+}

@@ -1,0 +1,15 @@
+/* Standard — the deliberate plain baseline. Light neutral grays, modest blue accent, nothing extra. */
+:root[data-theme="standard"] {
+  --nb-surface: #f5f5f5;
+  --nb-surface-alt: #ffffff;
+  --nb-text: #1a1a1a;
+  --nb-text-muted: #666666;
+  --nb-accent: #4a7dfc;
+  --nb-accent-text: #f5f5f5;
+  --nb-radius: 6px;
+  --nb-border-style: 1px solid rgba(0, 0, 0, 0.12);
+  --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nb-font-scale: 1;
+}
+
+/* Intentionally no decorative .widget-frame overrides — this is the plain baseline. */

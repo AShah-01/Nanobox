@@ -1,0 +1,19 @@
+/* Cotton Candy — soft pastels, light and airy. Gentle contrast but still readable. */
+:root[data-theme="cotton-candy"] {
+  --nb-surface: #fdf0f7;
+  --nb-surface-alt: #ffffff;
+  --nb-text: #4a3350;
+  --nb-text-muted: #9c84a8;
+  --nb-accent: #f4a6d7;
+  --nb-accent-text: #3d2a45;
+  --nb-radius: 20px;
+  --nb-border-style: 1px solid rgba(244, 166, 215, 0.35);
+  --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nb-font-scale: 1;
+}
+
+[data-theme="cotton-candy"] .widget-frame {
+  box-shadow:
+    0 4px 16px rgba(196, 132, 216, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}

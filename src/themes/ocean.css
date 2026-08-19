@@ -1,0 +1,20 @@
+/* Deep Ocean — deep navy/teal, calm and deep, distinct from Cyberpunk's neon energy. */
+:root[data-theme="ocean"] {
+  --nb-surface: #0a1e2b;
+  --nb-surface-alt: #0f2938;
+  --nb-text: #e4f4fa;
+  --nb-text-muted: #7fa9bd;
+  --nb-accent: #3ec6e0;
+  --nb-accent-text: #0d0f16;
+  --nb-radius: 12px;
+  --nb-border-style: 1px solid rgba(62, 198, 224, 0.2);
+  --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nb-font-scale: 1;
+}
+
+[data-theme="ocean"] .widget-frame {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  background-image: radial-gradient(circle at 85% -10%, rgba(62, 198, 224, 0.1), transparent 55%);
+}

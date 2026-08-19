@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { THEMES } from "../themes/themes";
-import { getTheme, setTheme } from "../core/themeStore";
+import { THEMES, ThemeId } from "../themes/themes";
+import { getTheme, setTheme, getThemeTint, setThemeTint } from "../core/themeStore";
 import { isHighContrast, setHighContrast } from "../core/contrastStore";
+import { deriveShades } from "../core/colorShades";
 import { playTone } from "../widgets/built-in/Alarm/tones";
 import type { AlarmSound } from "../storage/alarms";
 import "./SettingsPanel.css";
@@ -23,7 +24,29 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const [defaultSound, setDefaultSound] = useState<AlarmSound>(
     (localStorage.getItem("settings:defaultSound") as AlarmSound) || "chime",
   );
+  const [themeTints, setThemeTintsLocal] = useState<Partial<Record<ThemeId, string>>>(() => {
+    const map: Partial<Record<ThemeId, string>> = {};
+    THEMES.forEach((t) => {
+      const stored = getThemeTint(t.id);
+      if (stored) map[t.id] = stored;
+    });
+    return map;
+  });
   const panelRef = useRef<HTMLDivElement>(null);
+
+  function handleTintChange(id: ThemeId, hex: string) {
+    setThemeTintsLocal((prev) => ({ ...prev, [id]: hex }));
+    setThemeTint(id, hex);
+  }
+
+  function handleTintClear(id: ThemeId) {
+    setThemeTintsLocal((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setThemeTint(id, null);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -44,7 +67,10 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     localStorage.setItem("settings:opacity", opacity.toString());
     localStorage.setItem("settings:autostart", autostart.toString());
     localStorage.setItem("settings:defaultSound", defaultSound);
-    document.documentElement.style.setProperty("--nb-accent", accentColor);
+    const shades = deriveShades(accentColor);
+    document.documentElement.style.setProperty("--nb-accent", shades.accent);
+    document.documentElement.style.setProperty("--nb-accent-text", shades.accentText);
+    document.documentElement.style.setProperty("--nb-surface-alt", shades.surfaceAlt);
     document.documentElement.style.setProperty("font-size", `${fontSize * 100}%`);
     document.documentElement.style.setProperty("opacity", opacity.toString());
     onClose();
@@ -78,14 +104,38 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
             <label className="settings-section__label">Theme</label>
             <div className="settings-section__options">
               {THEMES.map((t) => (
-                <button
-                  key={t.id}
-                  className={`theme-option ${theme === t.id ? "is-active" : ""}`}
-                  onClick={() => setThemeLocal(t.id)}
-                  title={t.description}
-                >
-                  <span className="theme-option__label">{t.label}</span>
-                </button>
+                <div key={t.id} className="theme-option-row">
+                  <button
+                    className={`theme-option ${theme === t.id ? "is-active" : ""}`}
+                    onClick={() => setThemeLocal(t.id)}
+                    title={t.description}
+                  >
+                    <span className="theme-option__label">{t.label}</span>
+                  </button>
+                  <input
+                    type="color"
+                    className="theme-option__tint"
+                    value={themeTints[t.id] ?? "#888888"}
+                    onChange={(e) => handleTintChange(t.id, e.target.value)}
+                    title={
+                      themeTints[t.id]
+                        ? `Stain ${t.label} with ${themeTints[t.id]}`
+                        : `Pick a stain colour for ${t.label}`
+                    }
+                    aria-label={`Stain colour for ${t.label} theme`}
+                  />
+                  {themeTints[t.id] && (
+                    <button
+                      type="button"
+                      className="theme-option__tint-clear"
+                      onClick={() => handleTintClear(t.id)}
+                      title={`Clear ${t.label} stain`}
+                      aria-label={`Clear ${t.label} stain`}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           </div>
