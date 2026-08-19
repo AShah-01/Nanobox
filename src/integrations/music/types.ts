@@ -1,4 +1,4 @@
-export type MusicProviderId = "spotify" | "apple-music" | "youtube-music" | "youtube";
+export type MusicProviderId = "spotify" | "apple-music" | "youtube-music" | "youtube" | "system";
 
 /** Unified shape every music provider normalises its playback state into. */
 export interface NowPlayingData {

@@ -13,6 +13,7 @@ export const youtubeProvider: MusicProvider = {
   label: "YouTube",
   implemented: false,
   unavailableReason: UNAVAILABLE_REASON,
+  needsConfig: true, // moot while `implemented` is false — never reaches the connect form
   async isConnected() {
     return false;
   },
