@@ -12,6 +12,7 @@ try {
 
 interface TitleBarProps {
   onSettingsClick?: () => void;
+  onBlockBuilderClick?: () => void;
 }
 
 /**
@@ -27,7 +28,7 @@ interface TitleBarProps {
  * robust pattern Tauri's own custom-title-bar examples use, especially once
  * the bar also has buttons that must NOT start a drag.
  */
-export function TitleBar({ onSettingsClick }: TitleBarProps) {
+export function TitleBar({ onSettingsClick, onBlockBuilderClick }: TitleBarProps) {
   const [maximized, setMaximized] = useState(false);
 
   useEffect(() => {
@@ -55,6 +56,14 @@ export function TitleBar({ onSettingsClick }: TitleBarProps) {
         <span>Nanobox</span>
       </div>
       <div className="title-bar__controls" data-no-drag>
+        <button
+          className="title-bar__btn"
+          onClick={onBlockBuilderClick}
+          aria-label="Block builder"
+          title="Open the block builder"
+        >
+          🧩
+        </button>
         <button
           className="title-bar__btn"
           onClick={onSettingsClick}
