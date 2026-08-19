@@ -127,13 +127,15 @@ Every push to `main` builds Nanobox on both Windows and macOS via
 [GitHub Actions](https://github.com/AShah-01/Nanobox/actions/workflows/build.yml)
 and uploads the result — an MSI + NSIS installer for Windows, a DMG for
 macOS — as a workflow artifact. Open the latest successful run and download
-`nanobox-windows-debug` or `nanobox-macos-debug` from the Artifacts section
-at the bottom of the page.
+`nanobox-windows` or `nanobox-macos` from the Artifacts section at the
+bottom of the page.
 
-These are unsigned **debug** builds (larger, unoptimized, no code signing/
-notarization) meant for trying Nanobox out or testing a PR, not a polished
-release — signed, optimized installers are Milestone 8 (Polish & release)
-work, not done yet.
+These are unsigned release builds (no code signing/notarization yet — that's
+Milestone 8, Polish & release, not done yet) meant for trying Nanobox out or
+testing a PR, not a polished, signed release. They're regular optimized
+builds like `npm run tauri build` produces, not debug builds, so they behave
+like a normal installed app — no stray console window, no dependency on
+whatever launched them.
 
 ## Docs
 
