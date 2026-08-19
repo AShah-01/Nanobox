@@ -187,8 +187,12 @@ milestone replaces it with the actual designed system:
       real per-block execution (all 22 registered blocks in
       `blockLibrary.ts` now do something; see PROGRESS.md session 9),
       not just the AST shape
-- [ ] Visual canvas (React Flow) with premade block categories: Data, Display,
-  Logic, Sound, Interaction
+- [x] Visual canvas (React Flow) with premade block categories: Triggers,
+  Display, Logic, Data, Actions, Transform — click-to-add palette,
+  drag-to-connect wiring with live port-type validation (incompatible drops
+  refused), pan/zoom/minimap, save/load/delete programs to SQLite
+  (`block_programs`, migration v9), and Validate + Run-once against the real
+  `liveBridge`. See PROGRESS.md session 10.
 - [ ] Custom block creator: named inputs (text/number/colour/boolean) + sandboxed
   JS body editor (Compartment/ShadowRealm — no `window`/`document`/`fetch`/
   Tauri API access; all external calls via a whitelisted bridge API)

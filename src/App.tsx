@@ -1,9 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { WidgetGrid } from "./widgets/WidgetGrid";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { TitleBar } from "./components/TitleBar";
 import { OnboardingWizard, hasCompletedOnboarding } from "./components/OnboardingWizard";
+
+/**
+ * React Flow is ~230 KB of the bundle and the builder is an occasional
+ * full-screen overlay, so it loads on first open rather than at startup.
+ */
+const BlockBuilder = lazy(() =>
+  import("./components/blockBuilder/BlockBuilder").then((m) => ({ default: m.BlockBuilder })),
+);
 import { ensureAutostart } from "./core/autostart";
 import { getDb } from "./storage/db";
 import { initGlobalKeyboardNav } from "./core/keyboardNav";
@@ -22,6 +30,7 @@ function cycleTheme(reverse: boolean) {
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [blockBuilderOpen, setBlockBuilderOpen] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -45,11 +54,19 @@ function App() {
     { key: "ctrl+,", action: () => setSettingsOpen((v) => !v), description: "Toggle settings" },
     { key: "ctrl+shift+a", action: toggleAddWidget, description: "Add a widget" },
     { key: "ctrl+shift+t", action: () => cycleTheme(false), description: "Cycle to next theme" },
+    {
+      key: "ctrl+shift+b",
+      action: () => setBlockBuilderOpen((v) => !v),
+      description: "Toggle the block builder",
+    },
   ]);
 
   return (
     <main className="overlay">
-      <TitleBar onSettingsClick={() => setSettingsOpen(true)} />
+      <TitleBar
+        onSettingsClick={() => setSettingsOpen(true)}
+        onBlockBuilderClick={() => setBlockBuilderOpen(true)}
+      />
       <div className="overlay__body">
         {onboardingDone === false ? (
           <OnboardingWizard onComplete={() => setOnboardingDone(true)} />
@@ -62,6 +79,11 @@ function App() {
           )
         )}
         <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+        {blockBuilderOpen && (
+          <Suspense fallback={null}>
+            <BlockBuilder open onClose={() => setBlockBuilderOpen(false)} />
+          </Suspense>
+        )}
       </div>
     </main>
   );

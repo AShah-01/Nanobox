@@ -210,6 +210,20 @@ fn migrations() -> Vec<Migration> {
             sql: "ALTER TABLE shortcuts ADD COLUMN icon_data TEXT;",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 9,
+            description: "milestone_7_block_programs",
+            sql: "
+                CREATE TABLE IF NOT EXISTS block_programs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    program_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

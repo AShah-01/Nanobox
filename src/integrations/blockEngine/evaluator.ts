@@ -11,6 +11,11 @@ export function registerBlockDef(def: BlockDef) {
   DEFAULT_BLOCK_DEFS.set(def.id, def);
 }
 
+/** Read-only view of every registered block definition, keyed by def id. */
+export function getBlockDefs(): Map<string, BlockDef> {
+  return DEFAULT_BLOCK_DEFS;
+}
+
 /**
  * Validate a block program for correctness.
  * - All referenced blocks exist

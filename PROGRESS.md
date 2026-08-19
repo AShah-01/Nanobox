@@ -1307,3 +1307,130 @@ Visual canvas (React Flow) is the natural next slice — it's the only way
 a person actually builds a block program, and it's what the next session
 should spend its budget on rather than starting the block widget renderer
 or custom block creator first. See [ROADMAP.md](ROADMAP.md) Milestone 7.
+
+## Session 10 — 2026-08-19 — Milestone 7: visual block canvas [CEO-approved]
+
+**Milestone 7's second bullet ("Visual canvas (React Flow) with premade
+block categories") is done.** Built on branch `milestone-7/block-canvas`.
+Session 9 made the evaluator real but left blocks constructable only by
+hand-writing a `BlockProgram` object; this session gives them an actual
+drag-and-drop canvas, which is what a person needs to build one. The two
+remaining Milestone 7 items (custom block creator, `.nanowidget` export/
+import, block widget renderer) are deliberately left for future sessions —
+a reviewable slice, not a rushed whole.
+
+### What was built
+
+- **React Flow canvas** (`@xyflow/react` 12.11.3 — the maintained successor
+  to the `reactflow` package). `src/components/blockBuilder/BlockBuilder.tsx`
+  is a full-screen overlay opened from a new 🧩 title-bar button or
+  `Ctrl+Shift+B`. Palette on the left, canvas in the middle (pan/zoom,
+  background grid, zoom controls, minimap), saved-programs list on the right.
+- **Palette** (`BlockPalette.tsx`): every registered block from
+  `blockLibrary.ts`, grouped by its six categories (Triggers, Display,
+  Logic, Data, Actions, Transform). Click-to-add rather than HTML5
+  drag-to-add on purpose — a click works with a keyboard and screen reader
+  for free, and the added node is immediately draggable on the canvas anyway.
+- **Custom node renderer** (`BlockNodeView.tsx`): shows the block's type,
+  label, and one labelled handle per input/output port. Handles are
+  colour-coded by port type (string/number/boolean/array/any) so a wrong
+  wire is visible before you attempt it.
+- **Live connection validation**: `isConnectionValid` (in the new pure
+  `canvasAdapter.ts`) backs React Flow's `isValidConnection`, so the canvas
+  physically refuses an incompatible drop (output→input only, matching port
+  types, no self-loops, `any` is a wildcard). An attempted bad connect also
+  surfaces a one-line reason in the status bar rather than silently no-op'ing.
+- **Persistence**: migration v9 adds a `block_programs` table (name +
+  `program_json` blob). `src/storage/blockPrograms.ts` is the CRUD wrapper;
+  the builder's Save/load/delete and the saved-programs list use it. New
+  programs insert, existing ones update in place.
+- **Validate + Run once**: wired to the existing `validateProgram` and
+  `evaluateProgram(program, liveBridge)` from session 9 — the canvas isn't a
+  separate mock, it runs the same engine the eventual widget renderer will.
+  "Set as root" picks which node is evaluated first.
+- **`canvasAdapter.ts`** (pure, no React Flow *runtime* import — only its
+  type aliases) does `programToFlow`/`flowToProgram` conversions and the
+  connection/port-compat logic, so all of it unit-tests headlessly the same
+  way `rrule.ts`/`evaluator.ts` do.
+- **Bundle**: React Flow is ~230 KB, and the builder is an occasional
+  overlay, so it's `React.lazy`-loaded on first open — it lands in its own
+  199 KB chunk instead of the startup bundle (main chunk actually shrank
+  from 522 KB to 323 KB by splitting it out).
+
+### Bug found and fixed during browser QA
+
+New blocks were being placed only 40px apart, so each added block landed on
+top of the previous one and covered its port handles — making them
+undraggable until you manually moved the node away (i.e. you couldn't wire
+two freshly-added blocks at all). Caught by actually driving the canvas in a
+real browser (Playwright, see below), not by type-checking. Fixed by spacing
+placement on a 240×160 grid, wider than a node's footprint on both axes.
+
+### Verification
+
+- `npx tsc --noEmit` — clean.
+- `npm run test` — 45/45 passing (was 29). Added
+  `tests/integrations/canvasAdapter.test.ts` — 16 tests covering
+  `portsCompatible`, `programToFlow` (including dropping nodes whose def is
+  unregistered, and deriving a missing edge id), `flowToProgram` (round-trip
+  fidelity, root-node repointing when the old root is deleted, and *not*
+  rewriting the root when the canvas is emptied), and `isConnectionValid`
+  (compatible pair accepted; type mismatch, self-loop, unknown handle,
+  off-canvas node, and incomplete drag all rejected).
+- `npm run build` — succeeds; builder split into its own lazy chunk.
+- **Real browser QA (Playwright, standalone Vite):** opened the builder,
+  confirmed all 22 palette blocks across 6 categories, added
+  `Get Current Time` → `Show Text`, drew a valid string→string edge (created),
+  attempted a string→number edge to `Show Number` (correctly refused, edge
+  count stayed 1), set root, validated ("Program is valid."), and ran once —
+  **got a real ISO timestamp back through the wired blocks**, confirming the
+  canvas drives the actual evaluator end to end. Also confirmed node surfaces
+  follow the theme engine (Retro dark-green vs. Liquid Glass frosted-light)
+  and the keyboard focus ring is present. Screenshot captured. This is the
+  first session that could actually click-test its feature — the block
+  builder is a pure web overlay with no Tauri-window dependency, so unlike
+  the widget grid it drives fine in a plain browser (the only console errors
+  are the expected "Tauri IPC not available" ones every widget throws
+  outside the real shell).
+- `cargo check` (`src-tauri/`) — same standing environment gap as every
+  session since 3: this sandbox lacks the Linux GTK/GDK system libraries
+  (`gdk-3.0` via pkg-config), so `gdk-sys`'s build script fails before
+  reaching any app code. Migration v9 is a single additive `CREATE TABLE`,
+  the same shape as the eight before it. The `windows-latest`/`macos-latest`
+  CI matrix on the PR is the real check.
+
+### Accessibility
+
+- Palette items, canvas controls, and toolbar are all real `<button>`s —
+  keyboard-reachable, and they inherit the global `:focus-visible` ring from
+  `base.css` (confirmed via Tab in the browser).
+- The status line's success/error state is signalled by a coloured
+  left-border rule with the text kept on the theme's own `--nb-text` token,
+  rather than tinting the text green/red — coloured status text would fail
+  WCAG contrast on the light themes (Liquid Glass, Glossy).
+- The canvas surfaces (background, node fills, controls, minimap) are pinned
+  to `--nb-*` tokens so the builder respects the active theme instead of
+  React Flow's built-in light palette.
+
+### Known gaps / deliberately deferred
+
+- **Block widget renderer** — a saved program still can't be dropped onto
+  the desktop as a live widget. This is the natural next slice: a widget
+  type that loads a `block_programs` row and runs it on an interval via
+  `liveBridge`.
+- **Custom block creator** (sandboxed JS body editor) and **`.nanowidget`
+  export/import** — not started; the other two open Milestone 7 items.
+- No per-node config editor yet — blocks that read `config` (`compare`'s
+  operator, `math-op`'s operator, `on-timer`'s interval) use their defaults
+  on the canvas. Wiring a small per-node inspector is a follow-up.
+- No block *deletion* affordance beyond React Flow's built-in select +
+  Backspace; no undo/redo.
+- The engine's own session-9 gaps are unchanged (e.g. `if-else` is
+  dataflow-only, trigger blocks pull a one-shot snapshot).
+
+### Next up
+
+Block widget renderer — run a saved `BlockProgram` as a live desktop widget
+calling `liveBridge`, closing the loop from "build a program" to "use it."
+Then the custom block creator and `.nanowidget` export/import. See
+[ROADMAP.md](ROADMAP.md) Milestone 7.
