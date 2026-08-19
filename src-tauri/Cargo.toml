@@ -27,4 +27,12 @@ tauri-plugin-notification = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+base64 = "0.23"
+
+# Icon extraction (Part A of the "Error 6" fix) is Windows-only for now — see
+# src-tauri/src/icons.rs. windows-icons pulls in the `windows` crate's Win32
+# bindings, which don't link on non-Windows targets, so it's scoped to a
+# target-specific dependency table rather than the shared [dependencies].
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-icons = "0.4.0"
 
