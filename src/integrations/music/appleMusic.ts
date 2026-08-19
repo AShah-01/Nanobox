@@ -13,6 +13,7 @@ export const appleMusicProvider: MusicProvider = {
   label: "Apple Music",
   implemented: false,
   unavailableReason: UNAVAILABLE_REASON,
+  needsConfig: true, // moot while `implemented` is false — never reaches the connect form
   async isConnected() {
     return false;
   },

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { WidgetFrame } from "../../../components/WidgetFrame";
 import { MUSIC_PROVIDERS, MusicProvider, MusicProviderId, NowPlayingData } from "../../../integrations/music";
+import { SPOTIFY_REDIRECT_URI } from "../../../integrations/music/spotify";
 import { cacheNowPlaying, getActiveMusicProvider, getCachedNowPlaying, setActiveMusicProvider } from "../../../storage/music";
 import "./Music.css";
 
@@ -74,6 +75,12 @@ export function Music() {
       setShowConnectForm(null);
       return;
     }
+    if (!provider.needsConfig) {
+      // Nothing to collect from the user — connect immediately instead of
+      // making them click through an empty form.
+      await connect(provider);
+      return;
+    }
     setShowConnectForm(provider.id);
   }
 
@@ -81,11 +88,12 @@ export function Music() {
     setConnecting(true);
     setError(null);
     try {
-      await provider.connect({ clientId: clientIdInput.trim() });
+      await provider.connect(provider.needsConfig ? { clientId: clientIdInput.trim() } : undefined);
       await setActiveMusicProvider(provider.id);
       setActiveId(provider.id);
       setConnected(true);
       setShowConnectForm(null);
+      setClientIdInput("");
       startPolling(provider);
     } catch (err) {
       setError(err instanceof Error ? err.message : "failed to connect");
@@ -163,17 +171,22 @@ export function Music() {
 
         {showConnectForm && (
           <div className="music-widget__connect-form">
+            {showConnectForm === "spotify" && (
+              <ol className="music-widget__hint music-widget__steps">
+                <li>
+                  Create an app at <code>developer.spotify.com/dashboard</code>
+                </li>
+                <li>
+                  Add <code>{SPOTIFY_REDIRECT_URI}</code> as a Redirect URI on that app
+                </li>
+                <li>Paste the app&rsquo;s Client ID below</li>
+              </ol>
+            )}
             <input
               placeholder={`${providerById(showConnectForm).label} Client ID`}
               value={clientIdInput}
               onChange={(e) => setClientIdInput(e.target.value)}
             />
-            {showConnectForm === "spotify" && (
-              <p className="music-widget__hint">
-                Create an app at developer.spotify.com, add redirect URI <code>http://127.0.0.1:42815/callback</code>, then
-                paste its Client ID here.
-              </p>
-            )}
             <button disabled={connecting || !clientIdInput.trim()} onClick={() => connect(providerById(showConnectForm))}>
               {connecting ? "Connecting…" : "Connect"}
             </button>

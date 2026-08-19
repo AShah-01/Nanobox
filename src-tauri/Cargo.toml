@@ -27,7 +27,7 @@ tauri-plugin-notification = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
-base64 = "0.23"
+base64 = "0.23.1"
 
 # Icon extraction (Part A of the "Error 6" fix) is Windows-only for now — see
 # src-tauri/src/icons.rs. windows-icons pulls in the `windows` crate's Win32
@@ -35,4 +35,14 @@ base64 = "0.23"
 # target-specific dependency table rather than the shared [dependencies].
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-icons = "0.4.0"
+
+# System media-session reading ("Error 7/8" fix) is also Windows-only for now
+# — see src-tauri/src/system_media.rs. Kept as its own table (rather than
+# merged into the one above) since `cfg(windows)` and `cfg(target_os =
+# "windows")` are different predicate strings even though both match the
+# same platform; Cargo merges dependencies from every matching target table.
+[target."cfg(windows)".dependencies]
+pollster = "1.0.1"
+windows = { version = "0.62.2", features = ["Media_Control", "Foundation", "Storage_Streams", "Win32_System_Com"] }
+windows-future = "0.3.2"
 

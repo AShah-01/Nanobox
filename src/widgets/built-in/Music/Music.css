@@ -171,6 +171,17 @@
   color: var(--nb-text-muted);
 }
 
+.music-widget__steps {
+  padding-left: 1.1em;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.music-widget__steps code {
+  word-break: break-all;
+}
+
 .music-widget__error {
   margin: 0;
   font-size: 0.75em;

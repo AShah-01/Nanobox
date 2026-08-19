@@ -1,0 +1,181 @@
+//! OS-level "now playing" via the platform's native media-session APIs —
+//! the same source the taskbar / lock-screen media controls read from.
+//!
+//! Unlike the per-service providers in `src/integrations/music/*.ts`
+//! (Spotify's OAuth+Client-ID flow, or the deliberately-unimplemented Apple
+//! Music / YouTube Music stubs), this needs no client ID, no OAuth
+//! consent screen, and no per-app registration: it works generically for
+//! whatever app currently holds the system media session — Spotify
+//! (desktop app or a browser tab), YouTube Music in any browser, the Apple
+//! Music app, VLC, etc. — because they all already report their playback
+//! state to the OS to drive its native media controls.
+//!
+//! Windows: backed by `Windows.Media.Control.
+//! GlobalSystemMediaTransportControlsSessionManager` (SMTC) via the
+//! `windows` crate's WinRT bindings.
+//!
+//! macOS/Linux: there is no public equivalent today. macOS would require
+//! the private, unversioned `MediaRemote.framework` (no documented API,
+//! liable to break across OS updates, and the kind of thing that's unsafe
+//! to ship rather than "not yet implemented"); Linux's MPRIS D-Bus
+//! interface is a plausible future addition but is out of scope for this
+//! pass. `get_system_now_playing` returns `Ok(None)` on those platforms —
+//! see `src/integrations/music/systemMedia.ts`, which only marks this
+//! provider `implemented: true` on Windows in the first place, so the
+//! widget doesn't even offer it elsewhere.
+
+use serde::Serialize;
+
+#[derive(Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemNowPlaying {
+    pub title: String,
+    pub artist: String,
+    pub album: Option<String>,
+    pub is_playing: bool,
+    /// Milliseconds into the current track, if the session reports a timeline.
+    pub position_ms: Option<u64>,
+    /// Track duration in milliseconds, if the session reports a timeline.
+    pub duration_ms: Option<u64>,
+    /// `data:<mime>;base64,<...>` URI, ready to drop straight into an `<img src>`.
+    pub artwork_base64: Option<String>,
+}
+
+#[cfg(target_os = "windows")]
+#[tauri::command]
+pub fn get_system_now_playing() -> Result<Option<SystemNowPlaying>, String> {
+    windows_impl::current().map_err(|e| e.to_string())
+}
+
+#[cfg(not(target_os = "windows"))]
+#[tauri::command]
+pub fn get_system_now_playing() -> Result<Option<SystemNowPlaying>, String> {
+    // See module doc comment — no safe public "now playing" API on this
+    // platform. The frontend provider isn't marked `implemented` here
+    // anyway, so this is a defensive fallback rather than the primary path.
+    Ok(None)
+}
+
+#[cfg(target_os = "windows")]
+mod windows_impl {
+    use super::SystemNowPlaying;
+    use base64::Engine;
+    use windows::Media::Control::{
+        GlobalSystemMediaTransportControlsSessionManager as SessionManager,
+        GlobalSystemMediaTransportControlsSessionPlaybackStatus as PlaybackStatus,
+    };
+    use windows::Storage::Streams::DataReader;
+    use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
+
+    /// WinRT activation (the `RequestAsync` factory lookup below) requires
+    /// COM to be initialized on the calling thread, and Tauri dispatches
+    /// blocking commands onto a thread-pool thread that isn't
+    /// COM-initialized by default. `pollster::block_on` keeps the whole
+    /// async chain pinned to *this* OS thread (it parks/unparks rather than
+    /// letting a multi-threaded async runtime resume the continuation on a
+    /// different thread), so one apartment init up front is sufficient for
+    /// the whole call — no per-await re-initialization needed. MTA is used
+    /// because these are out-of-process broker objects (SMTC is agile) and
+    /// MTA avoids needing a message pump for a blocking call site like this.
+    pub fn current() -> windows::core::Result<Option<SystemNowPlaying>> {
+        unsafe {
+            let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
+        }
+
+        pollster::block_on(async {
+            let manager = SessionManager::RequestAsync()?.await?;
+
+            // `GetCurrentSession` succeeds with a null-backed result (which
+            // `windows-core` turns into an `Err`) when no app currently
+            // holds the system media session — that's "nothing playing",
+            // not a real error.
+            let Ok(session) = manager.GetCurrentSession() else {
+                return Ok(None);
+            };
+
+            let props = session.TryGetMediaPropertiesAsync()?.await?;
+            let title = props.Title().map(|s| s.to_string()).unwrap_or_default();
+            let artist = props.Artist().map(|s| s.to_string()).unwrap_or_default();
+            let album = props
+                .AlbumTitle()
+                .ok()
+                .map(|s| s.to_string())
+                .filter(|s| !s.is_empty());
+
+            let is_playing = session
+                .GetPlaybackInfo()
+                .ok()
+                .and_then(|info| info.PlaybackStatus().ok())
+                .map(|status| status == PlaybackStatus::Playing)
+                .unwrap_or(false);
+
+            let (position_ms, duration_ms) = match session.GetTimelineProperties() {
+                Ok(timeline) => {
+                    let position_ms = timeline.Position().ok().map(|ts| ticks_to_ms(ts.Duration));
+                    let duration_ms = match (timeline.StartTime(), timeline.EndTime()) {
+                        (Ok(start), Ok(end)) => Some(ticks_to_ms(end.Duration - start.Duration)),
+                        _ => None,
+                    };
+                    (position_ms, duration_ms)
+                }
+                Err(_) => (None, None),
+            };
+
+            // Best-effort album art: any failure along this chain just
+            // means no artwork, never a failure of the whole command.
+            let artwork_base64: Option<String> = 'artwork: {
+                let Ok(thumb_ref) = props.Thumbnail() else {
+                    break 'artwork None;
+                };
+                let Ok(open_op) = thumb_ref.OpenReadAsync() else {
+                    break 'artwork None;
+                };
+                let Ok(stream) = open_op.await else {
+                    break 'artwork None;
+                };
+                let Ok(size) = stream.Size() else {
+                    break 'artwork None;
+                };
+                // SMTC thumbnails are small (album art) — a sane upper
+                // bound guards against ever base64-inflating something huge.
+                if size == 0 || size > 8 * 1024 * 1024 {
+                    break 'artwork None;
+                }
+                let content_type = stream
+                    .ContentType()
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|_| "image/png".to_string());
+                let Ok(reader) = DataReader::CreateDataReader(&stream) else {
+                    break 'artwork None;
+                };
+                let Ok(load_op) = reader.LoadAsync(size as u32) else {
+                    break 'artwork None;
+                };
+                if load_op.await.is_err() {
+                    break 'artwork None;
+                }
+                let mut buf = vec![0u8; size as usize];
+                if reader.ReadBytes(&mut buf).is_err() {
+                    break 'artwork None;
+                }
+                let encoded = base64::engine::general_purpose::STANDARD.encode(&buf);
+                Some(format!("data:{content_type};base64,{encoded}"))
+            };
+
+            Ok(Some(SystemNowPlaying {
+                title,
+                artist,
+                album,
+                is_playing,
+                position_ms,
+                duration_ms,
+                artwork_base64,
+            }))
+        })
+    }
+
+    /// WinRT `TimeSpan.Duration` is in 100-nanosecond ticks.
+    fn ticks_to_ms(ticks: i64) -> u64 {
+        (ticks.max(0) as u64) / 10_000
+    }
+}

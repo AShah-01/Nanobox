@@ -6,6 +6,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 mod icons;
 mod keychain;
 mod oauth;
+mod system_media;
 
 fn migrations() -> Vec<Migration> {
     vec![
@@ -294,6 +295,7 @@ pub fn run() {
             oauth::oauth_await_redirect,
             icons::extract_file_icon,
             icons::read_image_as_data_url,
+            system_media::get_system_now_playing,
         ])
         .setup(|app| {
             let show_hide = MenuItem::with_id(app, "show_hide", "Show / Hide Nanobox", true, None::<&str>)?;

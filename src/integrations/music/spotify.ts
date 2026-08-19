@@ -11,6 +11,26 @@ const TOKENS_KEY = "spotify.tokens";
 /** Register this exact URI as a redirect URI on the Spotify app in the Spotify Developer Dashboard. */
 export const SPOTIFY_REDIRECT_URI = `http://127.0.0.1:${REDIRECT_PORT}/callback`;
 
+/**
+ * Spotify requires every OAuth app to be registered in the Spotify
+ * Developer Dashboard — there's no way around that being a Spotify-side
+ * requirement, so it can't be eliminated the way the OS-media-session
+ * provider (systemMedia.ts) eliminates setup entirely. But it only needs
+ * to happen ONCE, by the repo owner, not by every user.
+ *
+ * Until this is filled in, every user has to create their own Spotify app
+ * and paste in its Client ID (see Music.tsx's connect form) just to see
+ * what's playing — that's the "30 minutes just to find the client ID"
+ * complaint. Once the repo owner:
+ *   1. Creates a Spotify app at https://developer.spotify.com/dashboard
+ *   2. Adds `SPOTIFY_REDIRECT_URI` (above) as a Redirect URI on that app
+ *   3. Pastes the app's Client ID below (Client IDs aren't secret — this
+ *      is safe to ship in the built app, same as the PKCE flow already
+ *      assumes; see the module doc comment on `connect()`)
+ * ...every user gets a one-click connect with no setup of their own.
+ */
+export const DEFAULT_SPOTIFY_CLIENT_ID = "";
+
 interface StoredTokens extends OAuthTokens {
   clientId: string;
 }
@@ -54,13 +74,14 @@ export const spotifyProvider: MusicProvider = {
   id: "spotify",
   label: "Spotify",
   implemented: true,
+  needsConfig: DEFAULT_SPOTIFY_CLIENT_ID === "",
 
   async isConnected() {
     return (await getSecret(TOKENS_KEY)) !== null;
   },
 
   async connect(config) {
-    const clientId = config?.clientId;
+    const clientId = config?.clientId?.trim() || DEFAULT_SPOTIFY_CLIENT_ID;
     if (!clientId) throw new Error("Spotify Client ID is required");
     const tokens = await runOAuthPkceFlow({
       authorizeUrl: AUTHORIZE_URL,
