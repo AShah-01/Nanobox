@@ -1,9 +1,9 @@
 /*
  * Base design tokens as CSS custom properties, mirroring src/tokens/tokens.json.
  * These are the fallback values used when no theme has been applied yet (e.g.
- * a component rendered in isolation in tests). The six real themes live next
- * to this file (liquid-glass.css, matte.css, glossy.css, retro.css,
- * cyberpunk.css, steampunk.css) and override this same --nb-* set under a
+ * a component rendered in isolation in tests). The real themes live next to
+ * this file (one CSS file per theme id — see src/themes/themes.ts for the
+ * full list) and override this same --nb-* set under a
  * `:root[data-theme="..."]` selector — index.html sets data-theme="matte" by
  * default so the app never flashes these fallback values.
  */

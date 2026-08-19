@@ -1,0 +1,19 @@
+/* Forest — deep greens and earthy browns, nature-inspired, calm. */
+:root[data-theme="forest"] {
+  --nb-surface: #1b2b1e;
+  --nb-surface-alt: #24352a;
+  --nb-text: #e8e6d9;
+  --nb-text-muted: #a08e6c;
+  --nb-accent: #7cae5a;
+  --nb-accent-text: #0d0f16;
+  --nb-radius: 10px;
+  --nb-border-style: 1px solid rgba(124, 174, 90, 0.25);
+  --nb-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nb-font-scale: 1;
+}
+
+[data-theme="forest"] .widget-frame {
+  box-shadow:
+    inset 0 1px 0 rgba(124, 174, 90, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+}

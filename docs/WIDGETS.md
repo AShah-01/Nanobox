@@ -29,7 +29,12 @@ its own opacity slider and colour override via the widget's settings popover
 Beyond individual widgets, the **Settings** panel (gear icon in the title bar)
 controls:
 
-- Theme (all 6: Liquid Glass, Matte, Glossy, Retro, Cyberpunk, Steampunk)
+- Theme (18 total: Liquid Glass, Matte, Glossy, Retro, Cyberpunk, Steampunk,
+  Standard, Nord, Dracula, Solarized Dark, Forest, Deep Ocean, Sunset,
+  Monochrome, Cotton Candy, Industrial, Galaxy) — each theme also has an
+  optional per-theme "stain" colour swatch next to it in Settings, which
+  re-tints that theme's accent/surface colours (e.g. pick red on Liquid Glass
+  to get a red-stained Liquid Glass) without affecting other themes
 - Accent colour
 - Font size / window opacity
 - Launch on startup

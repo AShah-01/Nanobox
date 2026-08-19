@@ -58,12 +58,21 @@ function hslToHex(h: number, s: number, l: number): string {
 
 export function deriveShades(hex: string): ColorShades {
   const [r, g, b] = hexToRgb(hex);
-  const [h, s] = rgbToHsl(r, g, b);
+  const [h, s, l] = rgbToHsl(r, g, b);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  // `surfaceAlt` is a panel background that needs to read as a distinct
+  // surface behind the picked colour, while still tracking it. This used to
+  // be hardcoded to a fixed dark lightness (0.16) regardless of the input,
+  // so even a bright pastel produced a near-black panel. Instead, offset
+  // from the input's own HSL lightness — light colours get a lighter (but
+  // still separated) panel, dark colours get a slightly-lifted dark panel —
+  // clamped so neither end collapses to pure black or pure white.
+  const surfaceL = Math.min(Math.max(l > 0.5 ? l - 0.32 : l + 0.1, 0.09), 0.88);
 
   return {
     accent: hex,
     accentText: luminance > 0.55 ? "#0d0f16" : "#f5f5f5",
-    surfaceAlt: hslToHex(h, Math.min(s, 0.45), 0.16),
+    surfaceAlt: hslToHex(h, Math.min(s, 0.45), surfaceL),
   };
 }
