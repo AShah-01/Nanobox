@@ -71,8 +71,55 @@
 }
 
 .mood-widget__history-dot {
+  font-family: inherit;
   font-size: 0.95em;
   color: var(--nb-text-muted);
   width: 20px;
   text-align: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.mood-widget__history-dot:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.mood-widget__history-dot:disabled {
+  cursor: default;
+}
+
+.mood-widget__history-dot.is-today {
+  font-weight: 600;
+}
+
+.mood-widget__history-dot.is-target {
+  border-color: var(--nb-accent);
+  background: rgba(124, 156, 255, 0.12);
+}
+
+.mood-widget__history-dot.is-missing {
+  opacity: 0.55;
+}
+
+.mood-widget__editing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.8em;
+  color: var(--nb-text-muted);
+}
+
+.mood-widget__editing-cancel {
+  background: none;
+  border: none;
+  color: var(--nb-accent);
+  font-size: 1em;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
 }
