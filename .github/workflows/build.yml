@@ -8,7 +8,35 @@ on:
   workflow_dispatch:
 
 jobs:
+  frontend-check:
+    # Fast feedback (no Rust toolchain, no native build) — type-check,
+    # unit tests, and the Vite production bundle. Runs in ~1-2 min vs. the
+    # ~15-20 min full Tauri build below, so PRs get a quick signal without
+    # waiting on both native bundlers.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npx vitest run
+
+      - name: Build frontend bundle
+        run: npx vite build
+
   build:
+    needs: frontend-check
     strategy:
       fail-fast: false
       matrix:

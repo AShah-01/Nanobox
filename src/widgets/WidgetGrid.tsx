@@ -81,6 +81,16 @@ export function WidgetGrid() {
 
   useEffect(() => subscribeFocusMode(() => setHideOthersState(isHidingOthers())), []);
 
+  // Lets the global "Add widget" keyboard shortcut (App.tsx) reach this
+  // component's local menu state without lifting it or prop-drilling.
+  useEffect(() => {
+    function toggle() {
+      setAddMenuOpen((v) => !v);
+    }
+    window.addEventListener("nanobox:toggle-add-widget", toggle);
+    return () => window.removeEventListener("nanobox:toggle-add-widget", toggle);
+  }, []);
+
   function addWidget(type: WidgetId) {
     const size = DEFAULT_SIZE[type];
     const offset = instances.length * 16;

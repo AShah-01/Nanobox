@@ -135,6 +135,12 @@ notarization) meant for trying Nanobox out or testing a PR, not a polished
 release — signed, optimized installers are Milestone 8 (Polish & release)
 work, not done yet.
 
+## Docs
+
+- [docs/WIDGETS.md](docs/WIDGETS.md) — every built-in widget and what it does
+- [docs/BLOCK_ENGINE.md](docs/BLOCK_ENGINE.md) — how the visual block/lego
+  engine works under the hood (AST, evaluator, standard library)
+
 ## Roadmap & progress
 
 - [ROADMAP.md](ROADMAP.md) — milestone-by-milestone build order
