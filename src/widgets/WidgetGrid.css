@@ -111,6 +111,41 @@
   color: var(--nb-text);
 }
 
+.widget-grid__popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.widget-grid__popover-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 8px;
+  color: var(--nb-text);
+  font-size: 0.85em;
+  font-weight: 500;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+
+.widget-grid__popover-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.widget-grid__popover-btn--primary {
+  background: var(--nb-accent);
+  color: var(--nb-accent-text);
+  font-weight: 600;
+}
+
+.widget-grid__popover-btn--primary:hover {
+  filter: brightness(1.1);
+}
+
 .widget-grid__add {
   position: absolute;
   right: 16px;
