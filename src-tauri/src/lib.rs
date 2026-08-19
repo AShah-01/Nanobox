@@ -3,6 +3,7 @@ use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_sql::{Migration, MigrationKind};
 
+mod icons;
 mod keychain;
 mod oauth;
 
@@ -202,6 +203,12 @@ fn migrations() -> Vec<Migration> {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 8,
+            description: "shortcuts_icon_data",
+            sql: "ALTER TABLE shortcuts ADD COLUMN icon_data TEXT;",
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -285,6 +292,8 @@ pub fn run() {
             keychain::secure_get,
             keychain::secure_delete,
             oauth::oauth_await_redirect,
+            icons::extract_file_icon,
+            icons::read_image_as_data_url,
         ])
         .setup(|app| {
             let show_hide = MenuItem::with_id(app, "show_hide", "Show / Hide Nanobox", true, None::<&str>)?;

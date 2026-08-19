@@ -1,9 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { WidgetFrame } from "../../../components/WidgetFrame";
-import { createShortcut, deleteShortcut, listShortcuts, renameShortcut, Shortcut } from "../../../storage/shortcuts";
+import {
+  createShortcut,
+  deleteShortcut,
+  extractFileIcon,
+  listShortcuts,
+  readImageAsDataUrl,
+  renameShortcut,
+  Shortcut,
+  updateShortcutIcon,
+} from "../../../storage/shortcuts";
 import "./AppShortcuts.css";
 
 function baseName(path: string) {
@@ -11,11 +20,19 @@ function baseName(path: string) {
   return withoutExt.split(/[\\/]/).pop() ?? withoutExt;
 }
 
+interface MenuState {
+  id: number;
+  x: number;
+  y: number;
+}
+
 export function AppShortcuts() {
   const [shortcuts, setShortcuts] = useState<Shortcut[]>([]);
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [menu, setMenu] = useState<MenuState | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   async function refresh() {
     setShortcuts(await listShortcuts());
@@ -25,6 +42,44 @@ export function AppShortcuts() {
     refresh().catch((err) => console.error("failed to load shortcuts", err));
   }, []);
 
+  // Close the right-click menu on outside click or Escape — same pattern as
+  // ThemeSwitcher/SettingsPanel elsewhere in this codebase.
+  useEffect(() => {
+    if (!menu) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenu(null);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenu(null);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menu]);
+
+  /** Extracts (or re-extracts) a shortcut's OS icon and persists it, best-effort. */
+  async function refreshIcon(id: number, targetPath: string) {
+    const iconData = await extractFileIcon(targetPath);
+    await updateShortcutIcon(id, iconData);
+    await refresh();
+  }
+
+  async function addShortcuts(paths: string[]) {
+    for (const p of paths) {
+      const id = await createShortcut({ label: baseName(p), target_path: p });
+      // Populate icon_data once at creation time rather than re-extracting
+      // on every list load — extraction can be relatively slow.
+      const iconData = await extractFileIcon(p);
+      if (iconData) await updateShortcutIcon(id, iconData);
+    }
+    await refresh();
+  }
+
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     getCurrentWebview()
@@ -33,9 +88,7 @@ export function AppShortcuts() {
           setDragOver(true);
         } else if (event.payload.type === "drop") {
           setDragOver(false);
-          Promise.all(event.payload.paths.map((p) => createShortcut({ label: baseName(p), target_path: p })))
-            .then(refresh)
-            .catch((err) => console.error("failed to add dropped shortcut", err));
+          addShortcuts(event.payload.paths).catch((err) => console.error("failed to add dropped shortcut", err));
         } else {
           setDragOver(false);
         }
@@ -48,8 +101,7 @@ export function AppShortcuts() {
     const selected = await openDialog({ multiple: true });
     if (!selected) return;
     const paths = Array.isArray(selected) ? selected : [selected];
-    await Promise.all(paths.map((p) => createShortcut({ label: baseName(p), target_path: p })));
-    await refresh();
+    await addShortcuts(paths);
   }
 
   async function launch(s: Shortcut) {
@@ -68,6 +120,32 @@ export function AppShortcuts() {
     await refresh();
   }
 
+  function openMenu(e: React.MouseEvent, id: number) {
+    e.preventDefault();
+    setMenu({ id, x: e.clientX, y: e.clientY });
+  }
+
+  async function useAppIcon(s: Shortcut) {
+    setMenu(null);
+    await refreshIcon(s.id, s.target_path);
+  }
+
+  async function chooseCustomIcon(s: Shortcut) {
+    setMenu(null);
+    const selected = await openDialog({
+      multiple: false,
+      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "bmp", "webp", "ico"] }],
+    });
+    if (!selected || Array.isArray(selected)) return;
+    try {
+      const dataUrl = await readImageAsDataUrl(selected);
+      await updateShortcutIcon(s.id, dataUrl);
+      await refresh();
+    } catch (err) {
+      console.error("failed to set custom icon", err);
+    }
+  }
+
   return (
     <WidgetFrame title="Shortcuts">
       <div className={`shortcuts-widget ${dragOver ? "is-drag-over" : ""}`}>
@@ -77,10 +155,15 @@ export function AppShortcuts() {
               <button
                 className="shortcuts-widget__icon"
                 onClick={() => launch(s)}
+                onContextMenu={(e) => openMenu(e, s.id)}
                 title={s.target_path}
                 aria-label={`Launch ${s.label}`}
               >
-                {s.label.slice(0, 1).toUpperCase() || "?"}
+                {s.icon_data ? (
+                  <img className="shortcuts-widget__icon-img" src={s.icon_data} alt="" draggable={false} />
+                ) : (
+                  s.label.slice(0, 1).toUpperCase() || "?"
+                )}
               </button>
               {renamingId === s.id ? (
                 <input
@@ -112,8 +195,31 @@ export function AppShortcuts() {
             +
           </button>
         </div>
-        <p className="shortcuts-widget__hint">Drag files/apps here, or click + to browse. Double-click a name to rename.</p>
+        <p className="shortcuts-widget__hint">
+          Drag files/apps here, or click + to browse. Double-click a name to rename, right-click to change its icon.
+        </p>
       </div>
+
+      {menu &&
+        (() => {
+          const target = shortcuts.find((s) => s.id === menu.id);
+          if (!target) return null;
+          return (
+            <div
+              ref={menuRef}
+              className="shortcuts-widget__context-menu"
+              role="menu"
+              style={{ left: menu.x, top: menu.y }}
+            >
+              <button role="menuitem" className="shortcuts-widget__context-menu-item" onClick={() => useAppIcon(target)}>
+                Use app icon
+              </button>
+              <button role="menuitem" className="shortcuts-widget__context-menu-item" onClick={() => chooseCustomIcon(target)}>
+                Choose custom icon…
+              </button>
+            </div>
+          );
+        })()}
     </WidgetFrame>
   );
 }
