@@ -1399,6 +1399,20 @@ placement on a 240×160 grid, wider than a node's footprint on both axes.
   the same shape as the eight before it. The `windows-latest`/`macos-latest`
   CI matrix on the PR is the real check.
 
+### CI was already red on main — fixed here
+
+The PR's `frontend-check` failed on the first run, and checking main showed
+its last four runs (including current HEAD `fa09723`) were **already red**
+for the same reason — a pre-existing environmental break, not something this
+PR introduced. Root cause: the CI pins Node 20 (`setup-node`), but the
+`undici` 8.10.0 bundled by `jsdom` 30 calls `webidl.util.markAsUncloneable`,
+a Node API that only exists on Node 22+. On Node 20 that throws while jsdom
+loads, so *every* test file fails to start ("no tests, 7 errors") — which is
+why the suite passed locally (Node 22 here) but died in CI. GitHub was also
+already warning that Node 20 is being deprecated on its runners. Fixed by
+bumping both CI jobs to `node-version: 22` (current LTS). This is the minimal
+fix the failure needs and it heals `main` too once merged.
+
 ### Accessibility
 
 - Palette items, canvas controls, and toolbar are all real `<button>`s —
