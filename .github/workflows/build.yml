@@ -69,23 +69,30 @@ jobs:
       - name: Type-check frontend
         run: npx tsc --noEmit
 
-      - name: Build Tauri app (debug)
-        run: npm run tauri build -- --debug
+      # Deliberately NOT `-- --debug`: a debug build keeps the console
+      # subsystem on Windows (see src-tauri/src/main.rs), which makes the
+      # app auto-open a console window and die if that window is closed --
+      # exactly the "app doesn't work if the terminal is closed" bug users
+      # hit when running one of these artifacts. Building in release mode
+      # here gives out the same GUI-subsystem binary `npm run tauri build`
+      # produces locally, so it isn't tied to any console/terminal.
+      - name: Build Tauri app (release)
+        run: npm run tauri build
 
       - name: Upload build artifact (Windows)
         if: matrix.platform == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: nanobox-windows-debug
+          name: nanobox-windows
           path: |
-            src-tauri/target/debug/bundle/msi/*.msi
-            src-tauri/target/debug/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
 
       - name: Upload build artifact (macOS)
         if: matrix.platform == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: nanobox-macos-debug
-          path: src-tauri/target/debug/bundle/dmg/*.dmg
+          name: nanobox-macos
+          path: src-tauri/target/release/bundle/dmg/*.dmg
           if-no-files-found: error
