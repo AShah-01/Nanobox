@@ -218,6 +218,17 @@ fn read_text_file(path: String) -> Result<String, String> {
     std::fs::read_to_string(path).map_err(|e| e.to_string())
 }
 
+/// Writes to an arbitrary path — unlike `save_custom_widget_file`, not
+/// confined to one folder. Safe despite that: every caller sources `path`
+/// from a native save dialog (`@tauri-apps/plugin-dialog`'s `save()`) that
+/// the OS already showed the user and got their explicit consent to that
+/// exact location for, not from anything a script could invent unattended.
+/// Currently used for `.nanotheme` export.
+#[tauri::command]
+fn write_text_file(path: String, contents: String) -> Result<(), String> {
+    std::fs::write(path, contents).map_err(|e| e.to_string())
+}
+
 fn custom_widgets_dir_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     let dir = app
         .path()
@@ -287,6 +298,7 @@ pub fn run() {
         )
         .invoke_handler(tauri::generate_handler![
             read_text_file,
+            write_text_file,
             save_custom_widget_file,
             custom_widgets_dir,
             keychain::secure_set,

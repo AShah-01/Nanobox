@@ -33,21 +33,32 @@ app builds cleanly on both platforms (see [PLAN.md](PLAN.md)).
 
 See [PROGRESS.md](PROGRESS.md) session 2 for implementation notes and known gaps.
 
-## Milestone 3 — Theme engine (in progress)
+## Milestone 3 — Theme engine ✅
 
 - [x] CSS custom property token pipeline (`--nb-surface`, `--nb-text`,
       `--nb-accent`, `--nb-border-style`, `--nb-radius`, `--nb-font-family`,
       plus `--nb-accent-text` added this session — see PROGRESS.md session 3)
-- [x] All six themes: Liquid Glass, Matte, Glossy, Retro, Cyberpunk, Steampunk
+- [x] Seventeen themes total: the original six (Liquid Glass, Matte, Glossy,
+      Retro, Cyberpunk, Steampunk) plus Standard, Nord, Dracula, Solarized
+      Dark, Forest, Deep Ocean, Sunset, Monochrome, Cotton Candy, Industrial,
+      Galaxy
 - [x] Hot-swappable theme switching (no reload), minimal theme switcher UI
 - [x] Accessibility baseline: WCAG AA contrast on every theme, `:focus-visible`
-      rings, `prefers-reduced-motion` support
-- [ ] Per-theme user customisation: colour picker, opacity, font family/scale,
-      corner radius, border style; export/import as `.nanotheme`
-- [ ] Colour-blindness simulation checks
+      rings, `prefers-reduced-motion` support, high contrast mode
+- [x] Per-theme user customisation: "stain" colour picker (derives
+      accent/accent-text/surface-alt, same mechanism as the global accent
+      picker), font scale, corner radius, widget border style — via the ⚙
+      button next to each theme in Settings (`src/components/ThemeCustomizer.tsx`)
+- [x] Export/import as `.nanotheme` (JSON: theme id + customisation) via
+      native save/open dialogs (`src/core/themeExport.ts`)
+- [x] Colour-blindness simulation checks — a live "Preview as" filter
+      (protanopia/deuteranopia/tritanopia/achromatopsia) in Settings, using
+      standard SVG `feColorMatrix` approximations
+      (`src/components/ColorBlindnessPreview.tsx`); a self-check tool, not a
+      persisted setting — resets on reload by design
 
-See [PROGRESS.md](PROGRESS.md) session 3 for implementation notes and what's
-left before this milestone is fully done.
+See [PROGRESS.md](PROGRESS.md) session 3 (and the theming-cluster fix in the
+16-bug session) for implementation notes.
 
 ## Milestone 4 — Everyday ADHD/neurodivergent toolkit widgets ✅ (core set)
 

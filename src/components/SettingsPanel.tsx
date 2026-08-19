@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { THEMES, ThemeId } from "../themes/themes";
-import { getTheme, setTheme, getThemeTint, setThemeTint } from "../core/themeStore";
+import { getTheme, setTheme, getThemeTint } from "../core/themeStore";
 import { isHighContrast, setHighContrast } from "../core/contrastStore";
 import { deriveShades } from "../core/colorShades";
 import { playTone } from "../widgets/built-in/Alarm/tones";
 import type { AlarmSound } from "../storage/alarms";
+import { ThemeCustomizer } from "./ThemeCustomizer";
+import { ColorBlindnessFilters, ColorBlindnessMode, applyColorBlindnessPreview } from "./ColorBlindnessPreview";
 import "./SettingsPanel.css";
 
 const SOUND_LABELS: Record<AlarmSound, string> = { chime: "Chime", beep: "Beep", digital: "Digital" };
@@ -32,21 +34,23 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     });
     return map;
   });
+  const [customizingId, setCustomizingId] = useState<ThemeId | null>(null);
+  const [colorBlindMode, setColorBlindMode] = useState<ColorBlindnessMode>("none");
   const panelRef = useRef<HTMLDivElement>(null);
 
-  function handleTintChange(id: ThemeId, hex: string) {
-    setThemeTintsLocal((prev) => ({ ...prev, [id]: hex }));
-    setThemeTint(id, hex);
-  }
-
-  function handleTintClear(id: ThemeId) {
+  function refreshThemeTint(id: ThemeId) {
     setThemeTintsLocal((prev) => {
+      const stored = getThemeTint(id);
       const next = { ...prev };
-      delete next[id];
+      if (stored) next[id] = stored;
+      else delete next[id];
       return next;
     });
-    setThemeTint(id, null);
   }
+
+  useEffect(() => {
+    applyColorBlindnessPreview(colorBlindMode);
+  }, [colorBlindMode]);
 
   useEffect(() => {
     if (!open) return;
@@ -111,30 +115,19 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                     title={t.description}
                   >
                     <span className="theme-option__label">{t.label}</span>
+                    {themeTints[t.id] && (
+                      <span className="theme-option__tint-dot" style={{ background: themeTints[t.id] }} />
+                    )}
                   </button>
-                  <input
-                    type="color"
-                    className="theme-option__tint"
-                    value={themeTints[t.id] ?? "#888888"}
-                    onChange={(e) => handleTintChange(t.id, e.target.value)}
-                    title={
-                      themeTints[t.id]
-                        ? `Stain ${t.label} with ${themeTints[t.id]}`
-                        : `Pick a stain colour for ${t.label}`
-                    }
-                    aria-label={`Stain colour for ${t.label} theme`}
-                  />
-                  {themeTints[t.id] && (
-                    <button
-                      type="button"
-                      className="theme-option__tint-clear"
-                      onClick={() => handleTintClear(t.id)}
-                      title={`Clear ${t.label} stain`}
-                      aria-label={`Clear ${t.label} stain`}
-                    >
-                      ✕
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="theme-option__customize"
+                    onClick={() => setCustomizingId(t.id)}
+                    title={`Customize ${t.label}`}
+                    aria-label={`Customize ${t.label} theme`}
+                  >
+                    ⚙
+                  </button>
                 </div>
               ))}
             </div>
@@ -271,6 +264,30 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               </div>
             </div>
           </div>
+
+          {/* Colour-blindness preview */}
+          <div className="settings-section">
+            <div className="settings-section__row">
+              <label htmlFor="color-blind-preview" className="settings-section__label">
+                Preview as colour-blind
+              </label>
+              <select
+                id="color-blind-preview"
+                value={colorBlindMode}
+                onChange={(e) => setColorBlindMode(e.target.value as ColorBlindnessMode)}
+              >
+                <option value="none">Off</option>
+                <option value="protanopia">Protanopia (red-weak)</option>
+                <option value="deuteranopia">Deuteranopia (green-weak)</option>
+                <option value="tritanopia">Tritanopia (blue-weak)</option>
+                <option value="achromatopsia">Achromatopsia (no colour)</option>
+              </select>
+            </div>
+            <p className="settings-section__hint">
+              Self-check how the current theme reads for common colour-vision differences. This is a live preview
+              only — it resets when you reopen the app, it isn't saved as a preference.
+            </p>
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -288,6 +305,21 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
           </div>
         </div>
       </div>
+
+      <ColorBlindnessFilters />
+      {customizingId && (
+        <ThemeCustomizer
+          theme={THEMES.find((t) => t.id === customizingId)!}
+          onClose={() => {
+            refreshThemeTint(customizingId);
+            setCustomizingId(null);
+          }}
+          onImported={(id) => {
+            refreshThemeTint(id);
+            setThemeLocal(id);
+          }}
+        />
+      )}
     </div>
   );
 }

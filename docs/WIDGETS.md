@@ -29,18 +29,23 @@ its own opacity slider and colour override via the widget's settings popover
 Beyond individual widgets, the **Settings** panel (gear icon in the title bar)
 controls:
 
-- Theme (18 total: Liquid Glass, Matte, Glossy, Retro, Cyberpunk, Steampunk,
+- Theme (17 total: Liquid Glass, Matte, Glossy, Retro, Cyberpunk, Steampunk,
   Standard, Nord, Dracula, Solarized Dark, Forest, Deep Ocean, Sunset,
-  Monochrome, Cotton Candy, Industrial, Galaxy) — each theme also has an
-  optional per-theme "stain" colour swatch next to it in Settings, which
-  re-tints that theme's accent/surface colours (e.g. pick red on Liquid Glass
-  to get a red-stained Liquid Glass) without affecting other themes
+  Monochrome, Cotton Candy, Industrial, Galaxy) — each has a ⚙ "Customize"
+  button next to it in Settings opening a per-theme editor: a "stain" colour
+  (re-tints accent/surface, e.g. pick red on Liquid Glass to get a
+  red-stained Liquid Glass), font scale, corner radius, and widget border
+  style, independent of every other theme's customisation. Export the
+  current one as a `.nanotheme` file, or import one someone shared with you
 - Accent colour
 - Font size / window opacity
 - Launch on startup
 - **High contrast mode** — strips decorative overlays (scanlines, glow,
   texture) and raises muted-text/border contrast on top of whichever theme
   is active, rather than being a separate theme
+- **Preview as colour-blind** — a live self-check filter
+  (protanopia/deuteranopia/tritanopia/achromatopsia) over the current theme;
+  resets on reload, it's a preview tool, not a saved preference
 - Default notification sound (used as the initial pick for new alarms and
   for Focus Mode until you override it there)
 

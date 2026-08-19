@@ -126,33 +126,42 @@
 .theme-option__label {
   font-size: 0.8em;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.theme-option__tint {
-  width: 28px;
-  flex-shrink: 0;
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  cursor: pointer;
-  padding: 0;
-  background: none;
+.theme-option__tint-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.theme-option__tint-clear {
+.theme-option__customize {
   flex-shrink: 0;
+  width: 32px;
   background: rgba(255, 255, 255, 0.06);
-  border: none;
+  border: 2px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   color: var(--nb-text-muted);
-  font-size: 0.7em;
+  font-size: 0.9em;
   cursor: pointer;
-  padding: 0 6px;
   transition: all 0.15s ease-out;
 }
 
-.theme-option__tint-clear:hover {
+.theme-option__customize:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--nb-text);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.settings-section__hint {
+  margin: 0;
+  font-size: 0.72em;
+  color: var(--nb-text-muted);
+  line-height: 1.4;
 }
 
 .sound-picker {
