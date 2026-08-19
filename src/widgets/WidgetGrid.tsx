@@ -25,6 +25,11 @@ interface WidgetStyleSettings {
   borderStyle?: BorderStyleId;
 }
 
+/** Staged (not-yet-saved) edits for whichever widget's settings popover is currently open. */
+interface PopoverDraft extends WidgetStyleSettings {
+  opacity: number;
+}
+
 function parseStyleSettings(raw: string | null): WidgetStyleSettings {
   if (!raw) return {};
   try {
@@ -34,15 +39,17 @@ function parseStyleSettings(raw: string | null): WidgetStyleSettings {
   }
 }
 
-function cellStyle(instance: WidgetInstance): CSSProperties {
+// When `draft` is supplied (the instance's settings popover is open), the staged-but-unsaved
+// values are used for live preview instead of the persisted instance fields.
+function cellStyle(instance: WidgetInstance, draft?: PopoverDraft): CSSProperties {
   const style: CSSProperties = {
     left: instance.x,
     top: instance.y,
     width: instance.w,
     height: instance.h,
-    opacity: instance.opacity,
+    opacity: draft ? draft.opacity : instance.opacity,
   };
-  const { color, borderStyle } = parseStyleSettings(instance.style_settings);
+  const { color, borderStyle } = draft ?? parseStyleSettings(instance.style_settings);
   const shades = color ? deriveShades(color) : null;
   if (shades) {
     Object.assign(style, {
@@ -61,9 +68,11 @@ function cellStyle(instance: WidgetInstance): CSSProperties {
 export function WidgetGrid() {
   const [instances, setInstances] = useState<WidgetInstance[]>([]);
   const [openPopoverId, setOpenPopoverId] = useState<number | null>(null);
+  const [popoverDraft, setPopoverDraft] = useState<PopoverDraft | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [hideOthers, setHideOthersState] = useState(isHidingOthers());
   const containerRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   async function refresh() {
     const list = await listWidgetInstances();
@@ -105,6 +114,7 @@ export function WidgetGrid() {
       .then(refresh)
       .catch((err) => console.error("failed to remove widget", err));
     setOpenPopoverId(null);
+    setPopoverDraft(null);
   }
 
   function setOpacity(id: number, opacity: number) {
@@ -112,16 +122,64 @@ export function WidgetGrid() {
     updateWidgetOpacity(id, opacity).catch((err) => console.error("failed to save opacity", err));
   }
 
-  function setStyle(instance: WidgetInstance, next: WidgetStyleSettings) {
+  function setStyle(id: number, next: WidgetStyleSettings) {
     // Drop undefined-valued keys (e.g. a "reset to theme" click) before deciding
     // whether anything's actually set — Object.keys() counts them even though
     // JSON.stringify would silently omit them, which previously could persist
     // "{}" instead of clearing the column to NULL.
     const cleaned = Object.fromEntries(Object.entries(next).filter(([, v]) => v !== undefined)) as WidgetStyleSettings;
     const json = Object.keys(cleaned).length > 0 ? JSON.stringify(cleaned) : null;
-    setInstances((prev) => prev.map((i) => (i.id === instance.id ? { ...i, style_settings: json } : i)));
-    updateWidgetStyle(instance.id, json).catch((err) => console.error("failed to save widget style", err));
+    setInstances((prev) => prev.map((i) => (i.id === id ? { ...i, style_settings: json } : i)));
+    updateWidgetStyle(id, json).catch((err) => console.error("failed to save widget style", err));
   }
+
+  // Opens (or closes, if already open) the settings popover for `instance`, snapshotting its
+  // current opacity/colour/border-style into local staged state. The three popover controls edit
+  // only this staged draft — nothing is persisted until Save (or outside-click/Escape, which save
+  // per Error 13) or discarded via Cancel.
+  function togglePopover(instance: WidgetInstance) {
+    if (openPopoverId === instance.id) {
+      setOpenPopoverId(null);
+      setPopoverDraft(null);
+      return;
+    }
+    const { color, borderStyle } = parseStyleSettings(instance.style_settings);
+    setPopoverDraft({ opacity: instance.opacity, color, borderStyle });
+    setOpenPopoverId(instance.id);
+  }
+
+  // Closes whichever popover is open. `save` commits the staged draft via the same
+  // setOpacity/setStyle calls the old live-editing controls used to call directly (so local
+  // instance-list state and the DB both get updated); Cancel passes false to just discard it.
+  function closePopover(save: boolean) {
+    if (save && openPopoverId !== null && popoverDraft) {
+      setOpacity(openPopoverId, popoverDraft.opacity);
+      setStyle(openPopoverId, { color: popoverDraft.color, borderStyle: popoverDraft.borderStyle });
+    }
+    setOpenPopoverId(null);
+    setPopoverDraft(null);
+  }
+
+  // Click-outside-to-save (Error 13) and Escape-to-save, mirroring the useRef + mousedown
+  // pattern used by SettingsPanel/FocusMode, but saving rather than discarding on dismiss.
+  useEffect(() => {
+    if (openPopoverId === null) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        closePopover(true);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closePopover(true);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openPopoverId, popoverDraft]);
 
   function onCustomWidgetSaved(id: number, settings: string) {
     setInstances((prev) => prev.map((i) => (i.id === id ? { ...i, settings } : i)));
@@ -209,16 +267,20 @@ export function WidgetGrid() {
         const Component = isCustom ? null : WIDGET_REGISTRY[instance.widget_type as Exclude<WidgetId, "custom">];
         const isFocusMode = instance.widget_type === "focus-mode";
         if (!isCustom && !Component) return null;
-        const style = parseStyleSettings(instance.style_settings);
+        const isPopoverOpen = openPopoverId === instance.id;
+        // Falls back to the instance's persisted values so this still renders sanely even if
+        // the draft snapshot is somehow missing (it's always set by togglePopover in practice).
+        const draft: PopoverDraft =
+          isPopoverOpen && popoverDraft ? popoverDraft : { opacity: instance.opacity, ...parseStyleSettings(instance.style_settings) };
 
         return (
           <div
             key={instance.id}
             className={`widget-grid__cell ${hideOthers && !isFocusMode ? "is-dimmed" : ""}`}
-            style={cellStyle(instance)}
+            style={cellStyle(instance, isPopoverOpen ? draft : undefined)}
           >
-            {openPopoverId === instance.id && (
-              <div className="widget-grid__popover" data-no-drag>
+            {isPopoverOpen && (
+              <div className="widget-grid__popover" data-no-drag ref={popoverRef}>
                 <label>
                   Opacity
                   <input
@@ -226,8 +288,8 @@ export function WidgetGrid() {
                     min={0.2}
                     max={1}
                     step={0.05}
-                    value={instance.opacity}
-                    onChange={(e) => setOpacity(instance.id, Number(e.target.value))}
+                    value={draft.opacity}
+                    onChange={(e) => setPopoverDraft({ ...draft, opacity: Number(e.target.value) })}
                   />
                 </label>
 
@@ -236,11 +298,11 @@ export function WidgetGrid() {
                   <div className="widget-grid__color-row">
                     <input
                       type="color"
-                      value={style.color ?? "#7c9cff"}
-                      onChange={(e) => setStyle(instance, { ...style, color: e.target.value })}
+                      value={draft.color ?? "#7c9cff"}
+                      onChange={(e) => setPopoverDraft({ ...draft, color: e.target.value })}
                     />
-                    {style.color && (
-                      <button className="widget-grid__color-reset" onClick={() => setStyle(instance, { ...style, color: undefined })}>
+                    {draft.color && (
+                      <button className="widget-grid__color-reset" onClick={() => setPopoverDraft({ ...draft, color: undefined })}>
                         Reset to theme
                       </button>
                     )}
@@ -250,10 +312,10 @@ export function WidgetGrid() {
                 <label>
                   Style
                   <select
-                    value={style.borderStyle ?? ""}
+                    value={draft.borderStyle ?? ""}
                     onChange={(e) =>
-                      setStyle(instance, {
-                        ...style,
+                      setPopoverDraft({
+                        ...draft,
                         borderStyle: (e.target.value || undefined) as BorderStyleId | undefined,
                       })
                     }
@@ -266,13 +328,25 @@ export function WidgetGrid() {
                     ))}
                   </select>
                 </label>
+
+                <div className="widget-grid__popover-actions">
+                  <button className="widget-grid__popover-btn" onClick={() => closePopover(false)}>
+                    Cancel
+                  </button>
+                  <button
+                    className="widget-grid__popover-btn widget-grid__popover-btn--primary"
+                    onClick={() => closePopover(true)}
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             )}
 
             <WidgetChromeContext.Provider
               value={{
                 onDragStart: (e) => startDrag(e, instance),
-                onOpenSettings: () => setOpenPopoverId(openPopoverId === instance.id ? null : instance.id),
+                onOpenSettings: () => togglePopover(instance),
                 onClose: () => removeWidget(instance.id),
               }}
             >
