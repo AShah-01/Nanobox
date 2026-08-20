@@ -11,7 +11,7 @@ import {
 import { isHidingOthers, subscribeFocusMode } from "../core/focusModeStore";
 import { deriveShades } from "../core/colorShades";
 import { BORDER_STYLE_LABELS, BORDER_STYLES, borderStyleCss, BorderStyleId } from "../core/widgetBorderStyles";
-import { CustomWidget } from "./built-in";
+import { BlockWidget, CustomWidget } from "./built-in";
 import { WidgetChromeContext } from "./WidgetChromeContext";
 import { DEFAULT_SIZE, WIDGET_LABELS, WIDGET_REGISTRY, WidgetId } from "./registry";
 import "./WidgetGrid.css";
@@ -264,9 +264,13 @@ export function WidgetGrid() {
     <div className="widget-grid" ref={containerRef}>
       {instances.map((instance) => {
         const isCustom = instance.widget_type === "custom";
-        const Component = isCustom ? null : WIDGET_REGISTRY[instance.widget_type as Exclude<WidgetId, "custom">];
+        const isBlock = instance.widget_type === "block-widget";
+        const Component =
+          isCustom || isBlock
+            ? null
+            : WIDGET_REGISTRY[instance.widget_type as Exclude<WidgetId, "custom" | "block-widget">];
         const isFocusMode = instance.widget_type === "focus-mode";
-        if (!isCustom && !Component) return null;
+        if (!isCustom && !isBlock && !Component) return null;
         const isPopoverOpen = openPopoverId === instance.id;
         // Falls back to the instance's persisted values so this still renders sanely even if
         // the draft snapshot is somehow missing (it's always set by togglePopover in practice).
@@ -353,6 +357,8 @@ export function WidgetGrid() {
               <div className="widget-grid__content">
                 {isCustom ? (
                   <CustomWidget instance={instance} onSaved={(settings) => onCustomWidgetSaved(instance.id, settings)} />
+                ) : isBlock ? (
+                  <BlockWidget instance={instance} />
                 ) : (
                   Component && <Component />
                 )}

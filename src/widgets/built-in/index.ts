@@ -14,3 +14,4 @@ export { MoodCheckIn } from "./MoodCheckIn/MoodCheckIn";
 export { Music } from "./Music/Music";
 export { GentleReminders } from "./GentleReminders/GentleReminders";
 export { CustomWidget } from "./CustomWidget/CustomWidget";
+export { BlockWidget } from "./BlockWidget/BlockWidget";

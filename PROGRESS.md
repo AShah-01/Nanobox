@@ -1448,3 +1448,107 @@ Block widget renderer — run a saved `BlockProgram` as a live desktop widget
 calling `liveBridge`, closing the loop from "build a program" to "use it."
 Then the custom block creator and `.nanowidget` export/import. See
 [ROADMAP.md](ROADMAP.md) Milestone 7.
+
+## Session 11 — 2026-08-20 — Milestone 7: block widget renderer [CEO-approved]
+
+**Milestone 7's third bullet ("Block widget renderer") is done.** Built on
+branch `milestone-7/block-widget-renderer`. Sessions 9–10 made the block
+engine real and gave it a visual canvas but left saved programs unusable
+outside the builder — this session is what actually closes the loop from
+"build a program" to "see it running on the desktop." The remaining two
+Milestone 7 items (custom block creator, `.nanowidget` export/import) are
+deliberately left for a future session.
+
+### What was built
+
+- **`block-widget` widget type** (`src/widgets/built-in/BlockWidget`): picks
+  a saved `block_programs` row from a dropdown, then re-evaluates it against
+  the real `liveBridge` (the same evaluator + bridge the Block Builder's
+  "Run once" uses) on a configurable interval (5s/10s/30s/1m/5m presets),
+  rendering the root node's value. Follows the exact same "own
+  `WidgetInstance`, config lives in the free-text `settings` JSON column"
+  shape the Custom Widget type already established — no new SQLite table or
+  migration needed, `widget_instances.settings` already exists precisely for
+  this per-instance-config case.
+- **Live re-fetch, not a cached snapshot**: the widget re-reads the program
+  row from `block_programs` on every tick rather than once at configure
+  time, so an edit made in the Block Builder after the widget was set up
+  shows up on the next interval instead of requiring the widget to be
+  recreated — matches how every other storage-backed widget here reads
+  (no in-memory cache layer anywhere in `src/storage`).
+- **Graceful degradation**: if the configured program was since deleted,
+  the widget shows "This program was deleted." instead of throwing; if
+  evaluation fails (e.g. an unregistered block, a broken edge), the error
+  message from `EvalResult.error` is shown in place of a value rather than
+  silently displaying nothing.
+- **Registry wiring**: `block-widget` added to `WidgetId`/`WIDGET_LABELS`/
+  `DEFAULT_SIZE` in `src/widgets/registry.ts` and excluded from the
+  no-props `WIDGET_REGISTRY` map alongside `"custom"` (both need their
+  `WidgetInstance` passed in for per-instance settings) — `WidgetGrid.tsx`
+  special-cases it the same way it already special-cases Custom Widget.
+  It shows up in the "+ Add widget" menu like every other widget type.
+- `initBlockLibrary()` is called at module load in `BlockWidget.tsx` (same
+  pattern as `BlockBuilder.tsx`) so block defs are registered even when a
+  block widget is added without the Block Builder ever having been opened
+  in that session — `registerBlockDef` just repopulates a `Map`, so calling
+  it from two entry points is harmless.
+
+### Tests
+
+New `tests/widgets/BlockWidget.test.tsx` — 4 tests: the empty/unconfigured
+state prompts for a program and disables Save until one is chosen; a
+configured widget runs the real evaluator end-to-end (`get-current-time` →
+`show-text`) and renders the resulting ISO timestamp; a deleted program
+surfaces the "This program was deleted." message instead of crashing; and
+choosing a program + clicking Save persists `{ programId, intervalMs }` via
+`updateWidgetSettings`. Mocks `storage/blockPrograms`, `storage/
+widgetInstances`, and `integrations/blockEngine/bridge` (the same reason
+`tests/integrations/blockEngine.test.ts` avoids importing `bridge.ts`
+directly — it pulls in `@tauri-apps/plugin-notification`/`plugin-opener`,
+unavailable under jsdom) but exercises the real `evaluator.ts` +
+`blockLibrary.ts` registration and execution, not a stubbed evaluator.
+Total suite: 49/49 passing (was 45/45).
+
+### Build verification
+
+- `npx tsc --noEmit` — clean.
+- `npm run test` — 49/49 passing.
+- `npm run build` (`tsc && vite build`) — succeeds.
+- `cargo check` (`src-tauri/`) — same standing environment gap as every
+  session since 3 (missing Linux GTK/GDK `gdk-3.0` pkg-config libraries);
+  not run here. No Rust code changed this session (no new migration — this
+  slice only touches the frontend and reuses the existing `settings`
+  column), so the risk surface for the Windows/macOS build is low, but the
+  `windows-latest`/`macos-latest` CI matrix on the PR is the real check.
+- **Not click-tested in a real browser this session.** Session 10 could
+  browser-test the Block Builder because it explicitly doesn't depend on a
+  live Tauri window — but `BlockWidget` only renders inside `WidgetGrid`,
+  which calls `getDb()` (the SQLite plugin) to load/create widget instances
+  on mount. Outside a real Tauri shell that rejects, so `WidgetGrid` never
+  populates and there's no way to add or configure a Block Widget through
+  the actual app UI in this sandbox — the same limitation every other
+  DB-backed widget (Notes, Alarms, Habit Tracker, …) has always had here.
+  The 4 new tests exercise the real component tree and real evaluator
+  instead; an actual click-test of "add a Block Widget, pick a program,
+  watch it tick" is still owed the first time someone runs a built install.
+
+### Known gaps / deliberately deferred
+
+- No per-widget config editor for *which node's value* to show when a
+  program has multiple interesting outputs — the widget always shows the
+  root node's value, same "root node is the one thing evaluated" model the
+  Block Builder's "Run once" already uses.
+- Action-only programs (e.g. a program whose root is `action/send-notification`)
+  will re-run their action on every tick, since there's no edge-triggered
+  vs. polling distinction yet — a real concern for "don't repeatedly send
+  notifications" widgets, worth a debounce/once-per-change guard in a
+  follow-up rather than adding untested complexity here.
+- Not yet verified against a real Spotify/Google/notification round-trip in
+  this environment (inherits the same "compiles clean, not exercised for
+  real" caveat Milestone 5's OAuth flows already carry).
+
+### Next up
+
+Custom block creator (sandboxed JS body editor) and `.nanowidget` export/
+import — the last two open Milestone 7 items. See
+[ROADMAP.md](ROADMAP.md) Milestone 7.
