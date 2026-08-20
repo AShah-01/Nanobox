@@ -197,10 +197,15 @@ milestone replaces it with the actual designed system:
   JS body editor (Compartment/ShadowRealm — no `window`/`document`/`fetch`/
   Tauri API access; all external calls via a whitelisted bridge API)
 - [ ] Widget export/import as `.nanowidget` (JSON schema + base64 block code)
-- [ ] Block widget renderer: run a block program as a live desktop widget
+- [x] Block widget renderer: a `block-widget` widget type
+  (`src/widgets/built-in/BlockWidget`) picks a saved `block_programs` row and
+  re-evaluates it against `liveBridge` on a configurable interval (5s–5m),
+  showing the root node's value — closes the loop from "build a program" to
+  "use it"
 
-See [PROGRESS.md](PROGRESS.md) session 9 for what's implemented vs. still
-missing before this milestone is usable end-to-end.
+See [PROGRESS.md](PROGRESS.md) session 9 (engine execution), session 10
+(visual canvas), and session 11 (widget renderer) for what's implemented vs.
+still missing before this milestone is usable end-to-end.
 
 ## Milestone 8 — Polish & release
 

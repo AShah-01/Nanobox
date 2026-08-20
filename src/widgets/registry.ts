@@ -33,16 +33,18 @@ export type WidgetId =
   | "gentle-reminders"
   | "calendar"
   | "music"
-  | "custom";
+  | "custom"
+  | "block-widget";
 
 /**
- * "custom" is deliberately excluded here — unlike every other widget, it
- * needs its own `WidgetInstance` (for the per-instance code in `settings`),
- * so `WidgetGrid` renders it directly instead of through this no-props map.
- * It's still a normal entry in `WIDGET_LABELS` / `DEFAULT_SIZE` so it shows
- * up in the add-widget menu like everything else.
+ * "custom" and "block-widget" are deliberately excluded here — unlike every
+ * other widget, each needs its own `WidgetInstance` (for the per-instance
+ * code, or the chosen block program id, in `settings`), so `WidgetGrid`
+ * renders them directly instead of through this no-props map. They're still
+ * normal entries in `WIDGET_LABELS` / `DEFAULT_SIZE` so they show up in the
+ * add-widget menu like everything else.
  */
-export const WIDGET_REGISTRY: Record<Exclude<WidgetId, "custom">, ComponentType> = {
+export const WIDGET_REGISTRY: Record<Exclude<WidgetId, "custom" | "block-widget">, ComponentType> = {
   clock: Clock,
   notes: Notes,
   alarm: Alarm,
@@ -77,6 +79,7 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   calendar: "Calendar",
   music: "Music",
   custom: "Custom Widget (developer)",
+  "block-widget": "Block Widget",
 };
 
 export const DEFAULT_SIZE: Record<WidgetId, { w: number; h: number }> = {
@@ -96,4 +99,5 @@ export const DEFAULT_SIZE: Record<WidgetId, { w: number; h: number }> = {
   calendar: { w: 380, h: 380 },
   music: { w: 280, h: 240 },
   custom: { w: 300, h: 280 },
+  "block-widget": { w: 260, h: 220 },
 };
