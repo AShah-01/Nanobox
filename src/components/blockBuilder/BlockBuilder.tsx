@@ -30,6 +30,7 @@ import {
   updateBlockProgram,
   type BlockProgramRow,
 } from "../../storage/blockPrograms";
+import { exportNanowidget, importNanowidget } from "../../core/nanowidgetExport";
 import { BlockNodeView } from "./BlockNodeView";
 import { BlockPalette } from "./BlockPalette";
 import "./BlockBuilder.css";
@@ -210,6 +211,27 @@ export function BlockBuilder({ open, onClose }: BlockBuilderProps) {
     );
   }
 
+  async function handleExport() {
+    try {
+      await exportNanowidget(buildProgram());
+    } catch (err) {
+      setStatus({ kind: "error", text: err instanceof Error ? err.message : "Export failed." });
+    }
+  }
+
+  async function handleImport() {
+    try {
+      const newId = await importNanowidget();
+      if (newId === null) return; // user cancelled
+      refreshPrograms();
+      const rows = await listBlockPrograms();
+      const imported = rows.find((r) => r.id === newId);
+      if (imported) loadProgram(imported);
+    } catch (err) {
+      setStatus({ kind: "error", text: err instanceof Error ? err.message : "Import failed." });
+    }
+  }
+
   if (!open) return null;
 
   return (
@@ -232,6 +254,12 @@ export function BlockBuilder({ open, onClose }: BlockBuilderProps) {
         </button>
         <button type="button" onClick={run}>
           Run once
+        </button>
+        <button type="button" onClick={handleExport} disabled={savedId === null && nodes.length === 0}>
+          Export
+        </button>
+        <button type="button" onClick={handleImport}>
+          Import
         </button>
         <button
           type="button"
