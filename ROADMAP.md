@@ -172,7 +172,7 @@ builder, Polish & release) down to 7/8.
 See [PROGRESS.md](PROGRESS.md) session 7 for root-cause detail on the
 drag/taskbar bugs and what's still unverified.
 
-## Milestone 7 — Lego block widget builder
+## Milestone 7 — Lego block widget builder ✅
 
 An MVP precursor already exists: the Custom Widget type (added Milestone 4,
 see PROGRESS.md session 5) lets developers drop sandboxed HTML/CSS/JS
@@ -193,10 +193,15 @@ milestone replaces it with the actual designed system:
   refused), pan/zoom/minimap, save/load/delete programs to SQLite
   (`block_programs`, migration v9), and Validate + Run-once against the real
   `liveBridge`. See PROGRESS.md session 10.
-- [ ] Custom block creator: named inputs (text/number/colour/boolean) + sandboxed
-  JS body editor (Compartment/ShadowRealm — no `window`/`document`/`fetch`/
-  Tauri API access; all external calls via a whitelisted bridge API)
-- [ ] Widget export/import as `.nanowidget` (JSON schema + base64 block code)
+- [x] Custom block creator: named inputs (text/number/colour/boolean) + sandboxed
+  JS body editor (`new Function("inputs", body)` sandbox — receives only the
+  `inputs` object, no `window`/`document`/Tauri access; body validated for
+  syntax and 8 KB cap before any DB write). Custom blocks registered in the
+  live palette immediately on save, persisted to `custom_block_defs` (migration
+  v10). Edit/delete from the palette sidebar.
+- [x] Widget export/import as `.nanowidget` (JSON: name + full `BlockProgram`
+  AST inline — self-contained, no DB ids). Export/Import buttons in the
+  BlockBuilder toolbar; import creates a fresh DB row.
 - [x] Block widget renderer: a `block-widget` widget type
   (`src/widgets/built-in/BlockWidget`) picks a saved `block_programs` row and
   re-evaluates it against `liveBridge` on a configurable interval (5s–5m),
