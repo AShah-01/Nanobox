@@ -224,6 +224,24 @@ fn migrations() -> Vec<Migration> {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 10,
+            description: "milestone_7_custom_block_defs",
+            sql: "
+                CREATE TABLE IF NOT EXISTS custom_block_defs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    def_id TEXT NOT NULL UNIQUE,
+                    label TEXT NOT NULL,
+                    description TEXT NOT NULL DEFAULT '',
+                    inputs_json TEXT NOT NULL DEFAULT '[]',
+                    outputs_json TEXT NOT NULL DEFAULT '[]',
+                    js_body TEXT NOT NULL DEFAULT '',
+                    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+                    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

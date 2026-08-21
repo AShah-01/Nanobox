@@ -160,6 +160,46 @@
   color: var(--nb-text-muted);
 }
 
+.block-palette__row {
+  display: flex;
+  gap: 4px;
+}
+
+.block-palette__edit {
+  flex: 0 0 auto;
+  background: transparent;
+  color: var(--nb-text-muted);
+  border: var(--nb-border-style);
+  border-radius: calc(var(--nb-radius) / 2);
+  padding: 4px 7px;
+  font: inherit;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.block-palette__edit:hover {
+  background: var(--nb-accent);
+  color: var(--nb-accent-text);
+}
+
+.block-palette__new {
+  width: 100%;
+  margin-top: 14px;
+  background: var(--nb-surface);
+  color: var(--nb-text);
+  border: var(--nb-border-style);
+  border-radius: calc(var(--nb-radius) / 2);
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.block-palette__new:hover {
+  background: var(--nb-accent);
+  color: var(--nb-accent-text);
+}
+
 /* Text stays on the theme's own text token (readable on any theme's
    surface); the kind is signalled by a coloured left rule rather than by
    tinting the text itself, which would fail contrast on light themes. */

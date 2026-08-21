@@ -1,5 +1,6 @@
 import type { BlockProgram, BlockNode, BlockDef, ExecutionContext, EvalResult, ExecutionBridge } from "./types";
 import { NULL_BRIDGE } from "./types";
+import { CUSTOM_DEF_PREFIX, getCustomBlockEvaluator } from "./customBlockRegistry";
 
 const MAX_EXECUTION_DEPTH = 100;
 const DEFAULT_BLOCK_DEFS = new Map<string, BlockDef>();
@@ -249,6 +250,21 @@ async function executeBlock(
   inputs: Record<string, any>,
   bridge: ExecutionBridge
 ): Promise<EvalResult> {
+  // User-authored blocks aren't in the switch below — their body lives in
+  // SQLite and is compiled on load. See customBlockLoader for the sandboxing
+  // caveats.
+  if (def.id.startsWith(CUSTOM_DEF_PREFIX)) {
+    const run = getCustomBlockEvaluator(def.id);
+    if (!run) return fail(`Custom block "${def.id}" has no compiled body`);
+    try {
+      const value = await run(inputs);
+      const firstOutput = def.outputs[0]?.id;
+      return ok(firstOutput ? { [firstOutput]: value } : {}, value);
+    } catch (err) {
+      return fail(`Custom block "${def.id}" threw: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
   switch (def.id) {
     // ---- Triggers (pull-based snapshot of current state, not a live push) ----
     case "trigger/on-timer":
