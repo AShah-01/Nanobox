@@ -6,7 +6,7 @@ import { deriveShades } from "../core/colorShades";
 import { playTone } from "../widgets/built-in/Alarm/tones";
 import type { AlarmSound } from "../storage/alarms";
 import { ThemeCustomizer } from "./ThemeCustomizer";
-import { ColorBlindnessFilters, ColorBlindnessMode, applyColorBlindnessPreview } from "./ColorBlindnessPreview";
+import { isColorblindPalette, setColorblindPalette } from "../core/colorblindPalette";
 import "./SettingsPanel.css";
 
 const SOUND_LABELS: Record<AlarmSound, string> = { chime: "Chime", beep: "Beep", digital: "Digital" };
@@ -35,7 +35,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     return map;
   });
   const [customizingId, setCustomizingId] = useState<ThemeId | null>(null);
-  const [colorBlindMode, setColorBlindMode] = useState<ColorBlindnessMode>("none");
+  const [colorblindPalette, setColorblindPaletteLocal] = useState(isColorblindPalette());
   const panelRef = useRef<HTMLDivElement>(null);
 
   function refreshThemeTint(id: ThemeId) {
@@ -47,10 +47,6 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
       return next;
     });
   }
-
-  useEffect(() => {
-    applyColorBlindnessPreview(colorBlindMode);
-  }, [colorBlindMode]);
 
   useEffect(() => {
     if (!open) return;
@@ -71,10 +67,14 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     localStorage.setItem("settings:opacity", opacity.toString());
     localStorage.setItem("settings:autostart", autostart.toString());
     localStorage.setItem("settings:defaultSound", defaultSound);
-    const shades = deriveShades(accentColor);
-    document.documentElement.style.setProperty("--nb-accent", shades.accent);
-    document.documentElement.style.setProperty("--nb-accent-text", shades.accentText);
-    document.documentElement.style.setProperty("--nb-surface-alt", shades.surfaceAlt);
+    setColorblindPalette(colorblindPalette);
+    // Only apply accent shades when the colourblind palette isn't overriding them
+    if (!colorblindPalette) {
+      const shades = deriveShades(accentColor);
+      document.documentElement.style.setProperty("--nb-accent", shades.accent);
+      document.documentElement.style.setProperty("--nb-accent-text", shades.accentText);
+      document.documentElement.style.setProperty("--nb-surface-alt", shades.surfaceAlt);
+    }
     document.documentElement.style.setProperty("font-size", `${fontSize * 100}%`);
     document.documentElement.style.setProperty("opacity", opacity.toString());
     onClose();
@@ -265,27 +265,26 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
             </div>
           </div>
 
-          {/* Colour-blindness preview */}
+          {/* Colourblind palette */}
           <div className="settings-section">
             <div className="settings-section__row">
-              <label htmlFor="color-blind-preview" className="settings-section__label">
-                Preview as colour-blind
+              <label htmlFor="colorblind-palette" className="settings-section__label">
+                Colourblind palette
               </label>
-              <select
-                id="color-blind-preview"
-                value={colorBlindMode}
-                onChange={(e) => setColorBlindMode(e.target.value as ColorBlindnessMode)}
-              >
-                <option value="none">Off</option>
-                <option value="protanopia">Protanopia (red-weak)</option>
-                <option value="deuteranopia">Deuteranopia (green-weak)</option>
-                <option value="tritanopia">Tritanopia (blue-weak)</option>
-                <option value="achromatopsia">Achromatopsia (no colour)</option>
-              </select>
+              <label className="toggle-switch">
+                <input
+                  id="colorblind-palette"
+                  type="checkbox"
+                  checked={colorblindPalette}
+                  onChange={(e) => setColorblindPaletteLocal(e.target.checked)}
+                  className="toggle-switch__input"
+                />
+                <span className="toggle-switch__slider" />
+              </label>
             </div>
             <p className="settings-section__hint">
-              Self-check how the current theme reads for common colour-vision differences. This is a live preview
-              only — it resets when you reopen the app, it isn't saved as a preference.
+              Switches the accent colours to an Okabe-Ito palette safe for protanopia, deuteranopia, and tritanopia.
+              Saved as a preference and applied on every launch.
             </p>
           </div>
         </div>
@@ -306,7 +305,6 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
         </div>
       </div>
 
-      <ColorBlindnessFilters />
       {customizingId && (
         <ThemeCustomizer
           theme={THEMES.find((t) => t.id === customizingId)!}

@@ -16,6 +16,7 @@ import { ensureAutostart } from "./core/autostart";
 import { getDb } from "./storage/db";
 import { initGlobalKeyboardNav } from "./core/keyboardNav";
 import { initContrast } from "./core/contrastStore";
+import { initColorblindPalette } from "./core/colorblindPalette";
 import { getTheme, setTheme } from "./core/themeStore";
 import { THEMES } from "./themes/themes";
 import { useKeyboardNavigation } from "./hooks/useKeyboardNavigation";
@@ -46,6 +47,7 @@ function App() {
         setOnboardingDone(true); // fail open — don't block the app on a broken DB
       });
     initContrast().catch((err) => console.error("contrast init failed", err));
+    initColorblindPalette();
     initGlobalKeyboardNav();
   }, []);
 
