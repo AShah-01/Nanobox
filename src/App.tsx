@@ -31,7 +31,10 @@ function cycleTheme(reverse: boolean) {
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [blockBuilderOpen, setBlockBuilderOpen] = useState(false);
-  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+  // Optimistic: assume onboarding is done so widgets render immediately.
+  // The useEffect below corrects to false if the DB says otherwise, which
+  // swaps in the onboarding wizard on the next paint — a rare, fast path.
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(true);
 
   useEffect(() => {
     ensureAutostart().catch((err) => console.error("autostart setup failed", err));

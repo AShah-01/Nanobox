@@ -1,6 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { getDb } from "./storage/db";
+
+// Kick off DB connection + migrations immediately — before React even mounts.
+// By the time App.tsx's useEffect runs, the promise is already in flight (or
+// resolved), so the user doesn't wait an extra tick for the DB to open.
+getDb().catch(() => {/* App.tsx handles errors and fails open */});
 import "./App.css";
 import "./themes/base.css";
 import "./themes/liquid-glass.css";
