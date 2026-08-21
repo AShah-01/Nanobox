@@ -15,6 +15,7 @@ import "@xyflow/react/dist/style.css";
 import type { BlockDef, BlockProgram } from "../../integrations/blockEngine/types";
 import { evaluateProgram, getBlockDefs, validateProgram } from "../../integrations/blockEngine/evaluator";
 import { initBlockLibrary } from "../../integrations/blockEngine/blockLibrary";
+import { loadCustomBlockDefs } from "../../integrations/blockEngine/customBlockLoader";
 import { liveBridge } from "../../integrations/blockEngine/bridge";
 import {
   flowToProgram,
@@ -32,6 +33,8 @@ import {
 } from "../../storage/blockPrograms";
 import { BlockNodeView } from "./BlockNodeView";
 import { BlockPalette } from "./BlockPalette";
+import { CustomBlockCreator } from "./CustomBlockCreator";
+import type { CustomBlockDefRow } from "../../storage/customBlockDefs";
 import "./BlockBuilder.css";
 
 initBlockLibrary();
@@ -61,6 +64,10 @@ export function BlockBuilder({ open, onClose }: BlockBuilderProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [programs, setPrograms] = useState<BlockProgramRow[]>([]);
   const [status, setStatus] = useState<{ kind: "ok" | "error" | "info"; text: string } | null>(null);
+  const [customRows, setCustomRows] = useState<CustomBlockDefRow[]>([]);
+  /** Bumped after any custom-block change to force the palette to re-read the registry. */
+  const [paletteVersion, setPaletteVersion] = useState(0);
+  const [creator, setCreator] = useState<{ editingId?: number } | null>(null);
   const createdAtRef = useRef(Date.now());
 
   const definitions = useMemo(() => getBlockDefs(), []);
@@ -72,9 +79,20 @@ export function BlockBuilder({ open, onClose }: BlockBuilderProps) {
       .catch((err) => console.error("failed to list block programs", err));
   }, []);
 
+  const refreshCustomBlocks = useCallback(() => {
+    loadCustomBlockDefs()
+      .then((rows) => {
+        setCustomRows(rows);
+        setPaletteVersion((v) => v + 1);
+      })
+      .catch((err) => console.error("failed to load custom block defs", err));
+  }, []);
+
   useEffect(() => {
-    if (open) refreshPrograms();
-  }, [open, refreshPrograms]);
+    if (!open) return;
+    refreshPrograms();
+    refreshCustomBlocks();
+  }, [open, refreshPrograms, refreshCustomBlocks]);
 
   const buildProgram = useCallback(
     (): BlockProgram =>
@@ -250,7 +268,15 @@ export function BlockBuilder({ open, onClose }: BlockBuilderProps) {
       </header>
 
       <div className="block-builder__body">
-        <BlockPalette onAdd={addBlock} />
+        <BlockPalette
+          key={paletteVersion}
+          onAdd={addBlock}
+          onCreateCustom={() => setCreator({})}
+          onEditCustom={(defId) => {
+            const row = customRows.find((r) => r.def_id === defId);
+            if (row) setCreator({ editingId: row.id });
+          }}
+        />
 
         <div className="block-builder__canvas">
           <ReactFlow
@@ -291,6 +317,14 @@ export function BlockBuilder({ open, onClose }: BlockBuilderProps) {
           )}
         </aside>
       </div>
+
+      {creator && (
+        <CustomBlockCreator
+          editingId={creator.editingId}
+          onClose={() => setCreator(null)}
+          onSaved={refreshCustomBlocks}
+        />
+      )}
 
       {status && (
         <p className={`block-builder__status block-builder__status--${status.kind}`} role="status">

@@ -1,5 +1,5 @@
 import type { BlockDef } from "./types";
-import { registerBlockDef } from "./evaluator";
+import { getBlockDefs, registerBlockDef } from "./evaluator";
 
 /**
  * Standard block library.
@@ -318,41 +318,18 @@ export function initBlockLibrary() {
 }
 
 /**
- * Get all available blocks organized by category.
+ * All registered blocks grouped by category. Reads the live registry rather
+ * than a hardcoded list so user-authored custom blocks (registered by
+ * `customBlockLoader`) show up in the palette alongside the built-ins.
  */
 export function getBlocksByCategory(): Record<string, BlockDef[]> {
-  const allBlocks = [
-    OnTimer,
-    OnCalendarEvent,
-    OnMusicChange,
-    ShowText,
-    ShowNumber,
-    ShowImage,
-    ProgressBar,
-    IfElse,
-    Compare,
-    BooleanAnd,
-    BooleanOr,
-    GetCurrentTime,
-    GetNowPlaying,
-    GetNote,
-    PlaySound,
-    SendNotification,
-    OpenApp,
-    SetAlarm,
-    FormatText,
-    MathOp,
-    DateFormat,
-    JoinStrings,
-  ];
-
-  return allBlocks.reduce(
+  return [...getBlockDefs().values()].reduce(
     (acc, block) => {
       const cat = block.category ?? "Other";
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(block);
       return acc;
     },
-    {} as Record<string, BlockDef[]>
+    {} as Record<string, BlockDef[]>,
   );
 }

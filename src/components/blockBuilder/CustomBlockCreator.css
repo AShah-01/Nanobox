@@ -1,0 +1,171 @@
+.cbc__overlay {
+  position: fixed;
+  inset: 0;
+  /* Above the block builder shell so the dialog isn't clipped by the canvas. */
+  z-index: 3100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--nb-overlay, rgba(0, 0, 0, 0.55));
+  -webkit-app-region: no-drag;
+}
+
+.cbc {
+  background: var(--nb-surface-alt);
+  color: var(--nb-text);
+  border: var(--nb-border-style);
+  border-radius: var(--nb-radius);
+  font-family: var(--nb-font-family);
+  width: min(92vw, 520px);
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cbc__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.cbc__subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--nb-text-muted);
+}
+
+.cbc__row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: var(--nb-text-muted);
+}
+
+.cbc input,
+.cbc select,
+.cbc textarea {
+  background: var(--nb-surface);
+  color: var(--nb-text);
+  border: var(--nb-border-style);
+  border-radius: calc(var(--nb-radius) / 2);
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.cbc__body {
+  font-family: var(--nb-font-mono, ui-monospace, "SFMono-Regular", "Consolas", monospace);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  resize: vertical;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
+.cbc__section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cbc__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cbc__ports {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cbc__port {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cbc__port-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cbc__port-type {
+  flex: 0 0 auto;
+}
+
+.cbc__empty,
+.cbc__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--nb-text-muted);
+}
+
+.cbc__hint code {
+  font-family: var(--nb-font-mono, ui-monospace, "SFMono-Regular", "Consolas", monospace);
+}
+
+.cbc__error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--nb-danger, var(--nb-accent));
+}
+
+.cbc__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cbc button {
+  background: var(--nb-surface);
+  color: var(--nb-text);
+  border: var(--nb-border-style);
+  border-radius: calc(var(--nb-radius) / 2);
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.cbc button:hover:not(:disabled) {
+  background: var(--nb-accent);
+  color: var(--nb-accent-text);
+}
+
+.cbc button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.cbc__small {
+  padding: 3px 8px;
+  font-size: 0.75rem;
+}
+
+.cbc__primary {
+  background: var(--nb-accent);
+  color: var(--nb-accent-text);
+}
+
+.cbc__danger {
+  margin-right: auto;
+  color: var(--nb-danger, var(--nb-text));
+}
+
+.cbc__danger:hover:not(:disabled) {
+  background: var(--nb-danger, var(--nb-accent));
+  color: var(--nb-accent-text);
+}
