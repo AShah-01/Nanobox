@@ -173,6 +173,56 @@ Two services we'd love to add but are genuinely blocked on:
 
 Open an issue tagged `music` if you have a working approach for either.
 
+### 🍎 Help wanted — macOS
+
+The macOS build compiles in CI and produces a DMG artifact, but it has never
+been run hands-on by a human on a real Mac. Everything that depends on
+platform-level behaviour is untested on Apple hardware:
+
+- **Tray icon and overlay window** — `skipTaskbar`, always-on-top, and the
+  transparent overlay approach all behave differently on macOS vs Windows.
+  The window may not sit above the wallpaper the way it does on Windows, or
+  the tray icon may not appear in the right place.
+- **Launch on login** — uses a launchd agent on macOS; the autostart path
+  has not been verified.
+- **Window dragging** — `startDragging()` is a Tauri API that should work
+  cross-platform, but the feel (title bar height, drag region) hasn't been
+  tuned for macOS.
+- **Code signing and notarization** — unsigned DMGs require right-click →
+  Open on macOS 13+. A proper release needs a paid Apple Developer account
+  for signing and notarization. If you can provide or sponsor this, open an
+  issue.
+
+If you have a Mac and want to be the first real tester, clone the repo, grab
+a CI artifact (or build from source with `npm run tauri build`), and file
+everything that's broken. A single Mac tester doing a 30-minute pass would
+clear most of the unknowns in one go.
+
+### 🖥️ Help wanted — True standalone app (no terminal required)
+
+Right now, the only way to run Nanobox persistently — as a real app that
+lives in your taskbar and tray, survives closing the terminal, and starts on
+login — is to build it (`npm run tauri build`) and run the produced installer.
+The dev path (`npm run tauri dev`) is inherently terminal-attached by design.
+
+The gap we want help closing:
+
+- **Signed Windows installer (MSIX or NSIS)** — the CI build produces an
+  unsigned NSIS installer, but unsigned executables trigger SmartScreen
+  warnings on Windows. A proper release needs an EV or OV code-signing
+  certificate. If you can help with this (or know a low-cost path for indie
+  projects), open an issue.
+- **One-command install from a release** — ideally `winget install Nanobox`
+  on Windows and `brew install --cask nanobox` on macOS. Getting into those
+  registries requires a signed, versioned release first.
+- **Auto-update** — Tauri has a built-in updater plugin (`tauri-plugin-updater`)
+  that we haven't wired up. Once signing is sorted, this is the next step so
+  users don't have to manually reinstall on every release.
+
+If you've shipped a Tauri app through to a real signed release (especially on
+Windows, especially with auto-update), your experience would be directly
+applicable here. Open an issue or a discussion.
+
 ### 🐛 Help wanted — Real-world debugging
 
 Nanobox has been built and tested in a development environment — it has never
