@@ -7,7 +7,7 @@
 > calendar, alarms, clocks, shortcuts, and a lego-block custom widget builder,
 > all in one persistent, themeable desktop hub.
 
-**Status:** Pre-release, active development (Milestone 5 — Calendar + Music integrations, including real Google Calendar/Spotify OAuth — complete; see [ROADMAP.md](ROADMAP.md)).
+**Status:** Pre-release, active development — Milestones 1–7 complete (block engine, theme engine, integrations, ADHD toolkit, window chrome). Milestone 8 (packaging, docs, release) in progress. See [ROADMAP.md](ROADMAP.md).
 
 ---
 
@@ -157,15 +157,54 @@ desktop widget hub), issues and PRs are genuinely welcome. It's early and
 the codebase moves fast, so an issue proposing what you'd like to work on
 before a big PR will save both of us time.
 
-**Want to extend Nanobox without touching the core?** The Custom Widget
-type (add it from the overlay's "+ Add widget" menu) lets you write your
-own HTML/CSS/JS and drop it straight onto the desktop — it runs sandboxed
+### 🎵 Help wanted — Music widget
+
+The Music widget currently supports **Spotify** (OAuth PKCE) and the
+**OS media session** (Windows SMTC — picks up anything playing audio).
+Two services we'd love to add but are genuinely blocked on:
+
+- **Apple Music** — requires a private-key-signed JWT from an Apple Developer
+  account. There's no public API path that works client-side without one.
+  If you have an Apple Developer account and want to tackle this, the stub
+  is at `src/integrations/music/appleMusic.ts` with full notes on the blocker.
+- **YouTube Music** — no official "now playing" API exists. A browser
+  extension or companion approach may be the only viable route. If you've
+  solved this elsewhere, we'd love to know how.
+
+Open an issue tagged `music` if you have a working approach for either.
+
+### 🐛 Help wanted — Real-world debugging
+
+Nanobox has been built and tested in a development environment — it has never
+been lived in by real users at scale. If you try it and something feels off,
+broken, or just odd, **please open an issue**. Specifically looking for help
+with:
+
+- **macOS**: the codebase targets macOS 12+ but has only been built there
+  in CI, never tested hands-on. Anything broken on Mac is a priority fix.
+- **OAuth flows**: Spotify and Google Calendar OAuth have been implemented
+  and compile clean, but the flows have not been exercised against real
+  accounts in a real environment. First-time auth, token refresh, and revoke
+  paths are the most likely to have edge-case bugs.
+- **Window behaviour**: window dragging, tray icon, startup-on-login, and
+  the always-on-top overlay all depend on OS-level behaviour that varies
+  by Windows version and display setup. Bug reports with your OS version
+  and display config are very helpful.
+- **Performance on real hardware**: the app has been profiled in dev mode
+  only. If it feels sluggish on your machine, open an issue with your specs.
+
+If you want to do a broader debugging pass — running it for a week and
+filing everything that feels wrong — that would be genuinely one of the
+most valuable contributions right now.
+
+### 🧩 Extend without touching core
+
+The **Custom Widget** type (add it from the "+ Add widget" overlay) lets you
+write your own HTML/CSS/JS and drop it straight onto the desktop — sandboxed
 in an iframe with no access to your files, Nanobox's data, or Tauri APIs.
-It's a simple precursor to the full visual "lego block" widget builder
-planned for Milestone 7 (see [ROADMAP.md](ROADMAP.md)) — capable enough to
-build something real today, and a good on-ramp if you want to help shape
-where the full block engine goes. Each one you save also lands as a real
-file in your `custom-widgets` app-data folder, not just in the database.
+The **Block Builder** (Ctrl+Shift+B) is the full visual alternative — drag,
+wire, and run logic blocks without writing code, then pin the output as a
+live widget. Each program saves as a `.nanowidget` file you can share.
 
 ## Security
 
