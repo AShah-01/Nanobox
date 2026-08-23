@@ -157,6 +157,41 @@ desktop widget hub), issues and PRs are genuinely welcome. It's early and
 the codebase moves fast, so an issue proposing what you'd like to work on
 before a big PR will save both of us time.
 
+### 📦 Help wanted — App size and build optimisation
+
+A production Tauri app of this scope should produce an installer between
+**50 MB and 150 MB**. Because Tauri uses the OS's native WebView (WebView2 on
+Windows, WKWebView on macOS) instead of bundling a browser engine like Electron,
+the executable itself is tiny — any excess weight is almost always in what gets
+packaged alongside it.
+
+We haven't done a proper size audit yet and would love help from someone who has
+shipped a production Tauri build. The most likely culprits to investigate:
+
+- **`src-tauri/tauri.conf.json` → `bundle.resources`** — if the resources
+  array is too broad (e.g. `"../**/*"` or anything that accidentally sweeps in
+  `node_modules/` or the git history), Tauri will bundle gigabytes of dev
+  artefacts into the installer. Tightening this to only files the running app
+  actually needs at runtime is the single highest-leverage fix.
+- **`src-tauri/target/`** — Rust's compilation cache grows to tens of
+  gigabytes across many dev iterations. It should never end up in the
+  packaged output, but if your packaging script inadvertently includes it the
+  size will balloon. Running `cargo clean` inside `src-tauri/` before a
+  production build (`npm run tauri build`) resets it.
+- **`public/fonts/` and audio assets** — any uncompressed `.wav` alarm tones
+  or large desktop font files in `public/` ship verbatim in the frontend
+  bundle. Converting audio to `.mp3`/`.ogg` and images to `.webp` can cut
+  asset weight significantly.
+- **Debug vs release builds** — `npm run tauri dev` produces an unoptimised
+  binary with full debug symbols. Only `npm run tauri build` runs Vite tree-
+  shaking and Cargo's release profile (dead code stripping, LTO). Never
+  distribute a dev build.
+
+If you've done Tauri build optimisation before and want to take a pass at this,
+open an issue. Sharing the output of `du -sh src-tauri/target/ public/ dist/`
+and a paste of the `bundle` section of `src-tauri/tauri.conf.json` would give
+anyone helping the information they need to diagnose quickly.
+
 ### 🎵 Help wanted — Music widget
 
 The Music widget currently supports **Spotify** (OAuth PKCE) and the
