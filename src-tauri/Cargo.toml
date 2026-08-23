@@ -26,7 +26,10 @@ tauri-plugin-dialog = "2"
 tauri-plugin-notification = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+# sync-secret-service is the Linux D-Bus backend — excluded here because we
+# only target Windows and macOS, and it adds compile time and binary weight on
+# both platforms without doing anything. Add it back if Linux support ships.
+keyring = { version = "3", features = ["apple-native", "windows-native"] }
 base64 = "0.23.1"
 
 # Icon extraction (Part A of the "Error 6" fix) is Windows-only for now — see
@@ -45,4 +48,33 @@ windows-icons = "0.4.0"
 pollster = "1.0.1"
 windows = { version = "0.62.2", features = ["Media_Control", "Foundation", "Storage_Streams", "Win32_System_Com"] }
 windows-future = "0.3.2"
+
+# ── Build profiles ────────────────────────────────────────────────────────────
+
+[profile.release]
+# Strip debug symbols → smaller installer binary (often halves binary size).
+strip = true
+# Link-time optimisation: "thin" is a good balance — meaningfully smaller than
+# none, much faster than "fat". Inlines across crates and removes dead code
+# that wouldn't be visible inside a single compilation unit.
+lto = "thin"
+# One codegen unit lets LLVM see the whole crate at once for better
+# optimisation and smaller output; slower to compile but only runs in CI.
+codegen-units = 1
+# Abort on panic instead of unwinding — removes the unwinder from the binary.
+# Tauri itself uses this in its own release builds.
+panic = "abort"
+# opt-level 3 (speed) is the default; "z" optimises purely for size at the
+# cost of some runtime speed. For a widget hub that's mostly waiting for
+# user input "z" is the right call.
+opt-level = "z"
+
+[profile.dev]
+# Reduce debug info in dev builds from full (2) to line tables only (1).
+# No effect on the running app — you can still set breakpoints — but the
+# compiled artefacts in target/debug/ are significantly smaller, which
+# matters for contributors working with limited disk space.
+debug = 1
+# Keep incremental on (the default) so repeated dev builds stay fast.
+incremental = true
 

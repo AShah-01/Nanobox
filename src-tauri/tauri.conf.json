@@ -35,7 +35,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis", "dmg"],
     "category": "Utility",
     "shortDescription": "A customisable desktop companion for neurodivergent people",
     "longDescription": "Nanobox is a fully customisable desktop companion — notes, focus tools, calendar, alarms, and custom widgets, all in one calm, themeable space.",

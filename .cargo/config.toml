@@ -1,0 +1,20 @@
+# Project-level Cargo configuration.
+# Applies to all `cargo` commands run from the repo root or src-tauri/.
+
+[alias]
+# `cargo xtrim` — wipe the compilation cache before a clean release build.
+# Saves disk space for contributors and avoids stale artefacts in installers.
+# Run from src-tauri/: cargo xtrim && npm run tauri build (from repo root)
+xtrim = "clean --release"
+
+# Build the release binary only (no installer packaging) — faster than the
+# full `npm run tauri build` when you just want to check the Rust side.
+build-release = "build --release"
+
+[build]
+# Keep build jobs at a sensible default so contributors on lower-spec machines
+# don't get their CPU pinned during compilation. Cargo's auto-detect often
+# picks too many jobs on machines with many cores but limited RAM.
+# Commented out so Cargo uses its own default; uncomment and lower the number
+# if you hit OOM during compilation on a machine with ≤8 GB RAM.
+# jobs = 4
