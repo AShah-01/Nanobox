@@ -40,12 +40,17 @@ export function Alarm() {
   const ringingRef = useRef(ringing);
   ringingRef.current = ringing;
 
+  const [dbError, setDbError] = useState(false);
+
   async function refresh() {
     setAlarms(await listAlarms());
   }
 
   useEffect(() => {
-    refresh().catch((err) => console.error("failed to load alarms", err));
+    refresh().catch((err) => {
+      console.error("failed to load alarms", err);
+      setDbError(true);
+    });
     isPermissionGranted().then((granted) => {
       if (!granted) requestPermission().catch(() => {});
     });
@@ -114,6 +119,7 @@ export function Alarm() {
   return (
     <WidgetFrame title="Alarms">
       <div className="alarm-widget">
+        {dbError && <p className="alarm-widget__hint">⚠ Failed to load alarms. Restart the app to retry.</p>}
         <ul className="alarm-widget__list">
           {alarms.map((a) => (
             <li key={a.id} className={`alarm-widget__item ${ringing.has(a.id) ? "is-ringing" : ""}`}>

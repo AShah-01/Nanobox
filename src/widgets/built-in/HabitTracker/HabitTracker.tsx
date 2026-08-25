@@ -25,6 +25,8 @@ export function HabitTracker() {
   const [name, setName] = useState("");
   const [color, setColor] = useState(COLORS[0]);
 
+  const [dbError, setDbError] = useState(false);
+
   async function refresh() {
     const [h, l] = await Promise.all([listHabits(), listRecentLogs(90)]);
     setHabits(h);
@@ -32,7 +34,10 @@ export function HabitTracker() {
   }
 
   useEffect(() => {
-    refresh().catch((err) => console.error("failed to load habits", err));
+    refresh().catch((err) => {
+      console.error("failed to load habits", err);
+      setDbError(true);
+    });
   }, []);
 
   const today = todayIso(new Date());
@@ -54,6 +59,7 @@ export function HabitTracker() {
   return (
     <WidgetFrame title="Habits">
       <div className="habit-widget">
+        {dbError && <p className="habit-widget__empty">⚠ Failed to load habits. Restart the app to retry.</p>}
         <ul className="habit-widget__list">
           {habits.map((h) => {
             const done = isDoneToday(h.id);

@@ -21,6 +21,8 @@ export function TaskBreakdown() {
   const [showNewForm, setShowNewForm] = useState(false);
   const [stepDrafts, setStepDrafts] = useState<Record<number, string>>({});
 
+  const [dbError, setDbError] = useState(false);
+
   async function refresh() {
     const [b, s] = await Promise.all([listBreakdowns(), listSteps()]);
     setBreakdowns(b);
@@ -28,7 +30,10 @@ export function TaskBreakdown() {
   }
 
   useEffect(() => {
-    refresh().catch((err) => console.error("failed to load task breakdowns", err));
+    refresh().catch((err) => {
+      console.error("failed to load task breakdowns", err);
+      setDbError(true);
+    });
   }, []);
 
   async function createNew() {
@@ -50,6 +55,7 @@ export function TaskBreakdown() {
   return (
     <WidgetFrame title="Task Breakdown">
       <div className="breakdown-widget">
+        {dbError && <p className="breakdown-widget__empty">⚠ Failed to load tasks. Restart the app to retry.</p>}
         {breakdowns.map((b) => {
           const mySteps = steps.filter((s) => s.breakdown_id === b.id);
           const done = mySteps.filter((s) => s.completed).length;

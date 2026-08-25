@@ -21,12 +21,17 @@ export function GentleReminders() {
   const [label, setLabel] = useState("");
   const [interval, setIntervalMinutes] = useState(45);
 
+  const [dbError, setDbError] = useState(false);
+
   async function refresh() {
     setReminders(await listReminders());
   }
 
   useEffect(() => {
-    refresh().catch((err) => console.error("failed to load reminders", err));
+    refresh().catch((err) => {
+      console.error("failed to load reminders", err);
+      setDbError(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -61,6 +66,7 @@ export function GentleReminders() {
   return (
     <WidgetFrame title="Gentle Reminders">
       <div className="reminders-widget">
+        {dbError && <p className="reminders-widget__hint">⚠ Failed to load reminders. Restart the app to retry.</p>}
         <ul className="reminders-widget__list">
           {reminders.map((r) => (
             <li key={r.id} className="reminders-widget__item">

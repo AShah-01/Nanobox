@@ -25,12 +25,17 @@ export function MoodCheckIn() {
   const today = todayIso(new Date());
   const [targetDate, setTargetDate] = useState(today);
 
+  const [dbError, setDbError] = useState(false);
+
   async function refresh() {
     setLogs(await listRecentMoodLogs(7));
   }
 
   useEffect(() => {
-    refresh().catch((err) => console.error("failed to load mood logs", err));
+    refresh().catch((err) => {
+      console.error("failed to load mood logs", err);
+      setDbError(true);
+    });
   }, []);
 
   const targetLog = useMemo(() => logs.find((l) => l.log_date === targetDate), [logs, targetDate]);
@@ -72,6 +77,7 @@ export function MoodCheckIn() {
   return (
     <WidgetFrame title="Mood Check-in">
       <div className="mood-widget">
+        {dbError && <p className="mood-widget__logged">⚠ Failed to load mood data. Restart the app to retry.</p>}
         {targetDate !== today && (
           <p className="mood-widget__editing">
             Backfilling {targetDate}

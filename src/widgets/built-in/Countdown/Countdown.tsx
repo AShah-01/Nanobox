@@ -19,13 +19,17 @@ export function Countdown() {
   const [showForm, setShowForm] = useState(false);
   const [label, setLabel] = useState("");
   const [date, setDate] = useState("");
+  const [dbError, setDbError] = useState(false);
 
   async function refresh() {
     setCountdowns(await listCountdowns());
   }
 
   useEffect(() => {
-    refresh().catch((err) => console.error("failed to load countdowns", err));
+    refresh().catch((err) => {
+      console.error("failed to load countdowns", err);
+      setDbError(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -45,6 +49,7 @@ export function Countdown() {
   return (
     <WidgetFrame title="Countdown">
       <div className="countdown-widget">
+        {dbError && <p className="countdown-widget__empty">⚠ Failed to load countdowns. Restart the app to retry.</p>}
         <ul className="countdown-widget__list">
           {countdowns.map((c) => {
             const r = timeRemaining(c.target_date, now);

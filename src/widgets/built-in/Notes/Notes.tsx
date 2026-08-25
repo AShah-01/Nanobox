@@ -18,6 +18,7 @@ export function Notes() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [draft, setDraft] = useState<DraftState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dbError, setDbError] = useState(false);
 
   async function refresh() {
     setNotes(await listNotes());
@@ -25,7 +26,11 @@ export function Notes() {
   }
 
   useEffect(() => {
-    refresh().catch((err) => console.error("failed to load notes", err));
+    refresh().catch((err) => {
+      console.error("failed to load notes", err);
+      setDbError(true);
+      setLoading(false);
+    });
   }, []);
 
   async function saveDraft() {
@@ -52,7 +57,9 @@ export function Notes() {
   return (
     <WidgetFrame title="Notes">
       <div className="notes-widget">
-        {loading ? (
+        {dbError ? (
+          <p className="notes-widget__empty">⚠ Failed to load notes. Restart the app to retry.</p>
+        ) : loading ? (
           <p className="notes-widget__empty">Loading…</p>
         ) : (
           <ul className="notes-widget__list">

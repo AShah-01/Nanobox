@@ -67,10 +67,15 @@ export function BlockWidget({ instance }: BlockWidgetProps) {
     null,
   );
 
+  const [dbError, setDbError] = useState(false);
+
   useEffect(() => {
     listBlockPrograms()
       .then(setPrograms)
-      .catch((err) => console.error("failed to list block programs", err));
+      .catch((err) => {
+        console.error("failed to list block programs", err);
+        setDbError(true);
+      });
   }, []);
 
   // Re-fetches the program on every tick (not just once) so edits made in the
@@ -134,6 +139,7 @@ export function BlockWidget({ instance }: BlockWidgetProps) {
   return (
     <WidgetFrame title={programName ?? "Block widget"}>
       <div className="block-widget">
+        {dbError && <p className="block-widget__hint">⚠ Failed to load programs. Restart the app to retry.</p>}
         {editing ? (
           <div className="block-widget__editor" data-no-drag>
             <label>

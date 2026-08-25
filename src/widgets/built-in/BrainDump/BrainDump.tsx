@@ -7,13 +7,17 @@ import "./BrainDump.css";
 export function BrainDump() {
   const [entries, setEntries] = useState<BrainDumpEntry[]>([]);
   const [draft, setDraft] = useState("");
+  const [dbError, setDbError] = useState(false);
 
   async function refresh() {
     setEntries(await listBrainDumpEntries());
   }
 
   useEffect(() => {
-    refresh().catch((err) => console.error("failed to load brain dump", err));
+    refresh().catch((err) => {
+      console.error("failed to load brain dump", err);
+      setDbError(true);
+    });
   }, []);
 
   async function capture() {
@@ -26,6 +30,7 @@ export function BrainDump() {
   return (
     <WidgetFrame title="Brain Dump">
       <div className="braindump-widget">
+        {dbError && <p className="braindump-widget__empty">⚠ Failed to load entries. Restart the app to retry.</p>}
         <input
           className="braindump-widget__input"
           placeholder="Type it, hit Enter…"

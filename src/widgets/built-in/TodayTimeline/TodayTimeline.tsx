@@ -24,13 +24,17 @@ export function TodayTimeline() {
   const [color, setColor] = useState(COLORS[0]);
   const [start, setStart] = useState("09:00");
   const [end, setEnd] = useState("10:00");
+  const [dbError, setDbError] = useState(false);
 
   async function refresh() {
     setBlocks(await listTimelineBlocks());
   }
 
   useEffect(() => {
-    refresh().catch((err) => console.error("failed to load timeline", err));
+    refresh().catch((err) => {
+      console.error("failed to load timeline", err);
+      setDbError(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -50,6 +54,7 @@ export function TodayTimeline() {
   return (
     <WidgetFrame title="Today">
       <div className="timeline-widget">
+        {dbError && <p className="timeline-widget__empty">⚠ Failed to load timeline. Restart the app to retry.</p>}
         <ul className="timeline-widget__list">
           {blocks.map((b) => {
             const active = now >= toMinutes(b.start_time) && now < toMinutes(b.end_time);

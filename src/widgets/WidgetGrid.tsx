@@ -71,6 +71,7 @@ export function WidgetGrid() {
   const [popoverDraft, setPopoverDraft] = useState<PopoverDraft | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [hideOthers, setHideOthersState] = useState(isHidingOthers());
+  const [gridError, setGridError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -85,7 +86,10 @@ export function WidgetGrid() {
   }
 
   useEffect(() => {
-    refresh().catch((err) => console.error("failed to load widget layout", err));
+    refresh().catch((err) => {
+      console.error("failed to load widget layout", err);
+      setGridError(true);
+    });
   }, []);
 
   useEffect(() => subscribeFocusMode(() => setHideOthersState(isHidingOthers())), []);
@@ -258,6 +262,16 @@ export function WidgetGrid() {
 
     target.addEventListener("pointermove", onMove);
     target.addEventListener("pointerup", onUp);
+  }
+
+  if (gridError) {
+    return (
+      <div className="widget-grid widget-grid--error">
+        <p style={{ padding: "24px", color: "var(--nb-text-muted)" }}>
+          ⚠ Failed to load widgets. Restart the app to retry.
+        </p>
+      </div>
+    );
   }
 
   return (
