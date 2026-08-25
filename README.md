@@ -60,70 +60,162 @@ nanobox/
 
 ## Getting started
 
+Nanobox isn't on an app store or as a packaged installer yet — running it
+from source is the only way to use it right now. Once signed releases exist
+they'll be linked from the [GitHub Releases page](https://github.com/AShah-01/Nanobox/releases)
+and from this README.
+
+---
+
 ### Windows
 
-**First time here?** All you need is [Node.js](https://nodejs.org/) installed,
-then:
+#### 1 — Install Node.js 20+
+
+Download the LTS installer from [nodejs.org](https://nodejs.org/), or use winget:
+
+```bash
+winget install OpenJS.NodeJS.LTS
+```
+
+#### 2 — Install Rust
+
+```bash
+winget install Rustlang.Rustup
+```
+
+Open a **new** terminal after this so `rustup`, `rustc`, and `cargo` are on your PATH.
+
+#### 3 — Install the C++ Build Tools
+
+Tauri's Rust side needs the MSVC linker. Install the "Desktop development with C++" workload:
+
+```bash
+winget install Microsoft.VisualStudio.2022.BuildTools --override "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive"
+```
+
+Alternatively, download the [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) installer and tick **Desktop development with C++** manually.
+
+> **WebView2** (required by Tauri) ships pre-installed on Windows 10 and 11. If you are on an older build or a stripped enterprise image, download it from [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/).
+
+#### 4 — Clone and install
 
 ```bash
 git clone https://github.com/AShah-01/Nanobox.git
 cd Nanobox
 npm install
-npm link
 ```
 
-From then on, typing `nanobox` in any terminal opens a local setup guide in
-your browser (`http://localhost:4317`) with copyable, platform-specific
-commands for everything else — installing Rust, the native build tools,
-running the app, all of it. Re-run it any time with `nanobox`, or
-`npm run guide` from inside the repo if you'd rather not `npm link` globally.
-
-Nanobox isn't published to an app store or as a standalone installer yet —
-right now, running it from source via this guide *is* the install process.
-Once packaged releases exist, they'll be linked from the guide page and from
-this README.
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) 20+
-- [Rust](https://rustup.rs/) (stable toolchain)
-- Platform build tools:
-  - **Windows**: [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (Desktop development with C++ workload) + [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (preinstalled on Windows 10/11)
-  - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
-
-### Setup
-
-```bash
-git clone https://github.com/AShah-01/Nanobox.git
-cd Nanobox
-npm install
-```
-
-### Run in development
+#### 5 — Run in development
 
 ```bash
 npm run tauri dev
 ```
 
-This is a **dev server** — it's meant to stay attached to the terminal you
-launched it from (that's what makes hot-reload work), and closing that
-terminal closes the app. That's normal, not a bug. If you want Nanobox to
-behave like a normal installed app — sitting in the taskbar/tray,
-surviving after you close whatever launched it — build and run the real
-app instead: `npm run tauri build`, then run the installer it produces (or
-double-click the built `.exe`/`.app` directly, not from inside a terminal).
-See "Grab a build" below for a version you don't even have to build
-yourself.
+The first run compiles the Rust side — this takes a few minutes. Subsequent runs are fast thanks to incremental compilation. Look for the Nanobox icon in your **system tray** once it starts; click it to show or hide the overlay window.
 
-### Build
+> **Note:** `npm run tauri dev` is a dev server — it stays attached to the terminal that launched it and hot-reloads on code changes. Closing that terminal closes the app. That's by design. For the persistent, tray/taskbar experience (the app surviving after you close the terminal), build and install instead: `npm run tauri build`, then run the produced installer.
+
+#### Build a release
 
 ```bash
 npm run tauri build
 ```
 
-### Mac
-... (Mac side is still pending. Please wait patiently. Thanks)
+Produces an NSIS installer at `src-tauri/target/release/bundle/nsis/`.
 
+#### Verify the tools are installed correctly
+
+```bash
+node --version && rustc --version && cargo --version
+```
+
+All three should print a version number. If `rustc` or `cargo` are not found, open a **new** terminal — PATH changes from the rustup installer only apply to new shells.
+
+---
+
+### macOS
+
+#### 1 — Install Xcode Command Line Tools
+
+This provides the clang compiler, linker, and macOS SDK that Rust needs. Full Xcode is **not** required for desktop development.
+
+```bash
+xcode-select --install
+```
+
+A dialog will appear — click **Install**. This takes a few minutes. If you already have full Xcode installed, accept the license instead:
+
+```bash
+sudo xcodebuild -license accept
+```
+
+#### 2 — Install Node.js 20+
+
+Download the LTS installer from [nodejs.org](https://nodejs.org/), or use Homebrew:
+
+```bash
+brew install node
+```
+
+> **Apple Silicon note:** Make sure you are running a native arm64 Node binary, not an x86_64 one under Rosetta. Using a version manager like [fnm](https://github.com/Schniz/fnm) (`brew install fnm`) is the cleanest way to guarantee this.
+
+#### 3 — Install Rust
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+Follow the prompts (option 1, default install). Then reload your shell:
+
+```bash
+source "$HOME/.cargo/env"
+```
+
+On Apple Silicon, `rustup` installs the `aarch64-apple-darwin` target automatically — no extra steps needed for native M-series builds.
+
+#### 4 — Clone and install
+
+```bash
+git clone https://github.com/AShah-01/Nanobox.git
+cd Nanobox
+npm install
+```
+
+> **Apple Silicon gotcha:** If `npm install` produces errors about missing `@rollup/rollup-darwin-arm64` or similar native binaries, your Node.js is likely running under Rosetta rather than natively. Switch to a native arm64 Node build (via fnm or a fresh download from nodejs.org) and re-run `npm install`.
+
+#### 5 — Run in development
+
+```bash
+npm run tauri dev
+```
+
+The first run compiles the Rust side — this takes a few minutes. Once running, look for the Nanobox icon in your **menu bar** (top-right). Click it to show or hide the overlay window.
+
+> **Note:** `npm run tauri dev` is a dev server attached to its terminal. Closing the terminal closes the app. For a persistent app that survives closing the terminal, build it: `npm run tauri build`, then double-click the `.app` in `src-tauri/target/release/bundle/macos/` (or run the DMG). Unsigned apps on macOS 13+ will prompt "damaged app" — right-click → Open to bypass, or run `xattr -d com.apple.quarantine path/to/Nanobox.app` first.
+
+#### Build a release
+
+```bash
+npm run tauri build
+```
+
+Produces a `.app` bundle and a DMG at `src-tauri/target/release/bundle/macos/` and `src-tauri/target/release/bundle/dmg/`.
+
+#### Verify the tools are installed correctly
+
+```bash
+node --version && rustc --version && cargo --version
+```
+
+All three should print a version. If `rustc`/`cargo` are not found, run `source "$HOME/.cargo/env"` or open a new terminal.
+
+#### Known macOS caveats
+
+- **Unsigned builds trigger a Gatekeeper warning.** Right-click → Open, or strip the quarantine flag with `xattr -d com.apple.quarantine path/to/Nanobox.app`. Code signing and notarization are Milestone 8 items.
+- **The overlay window and tray icon are untested on real hardware.** The app compiles and runs in CI, but its macOS-specific behaviour (always-on-bottom window, menu bar icon, launch on login) has never been verified by a human on a physical Mac. If something looks wrong, please [open an issue](https://github.com/AShah-01/Nanobox/issues).
+- **CSS rendering differences.** WKWebView (macOS) and WebView2 (Windows) render some CSS differently — notably `backdrop-filter`, custom scrollbars, and font metrics. Expect minor visual differences from the Windows screenshots.
+
+---
 
 ### Grab a build without building it yourself
 
