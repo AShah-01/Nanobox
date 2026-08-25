@@ -21,6 +21,7 @@ export function ThemeCustomizer({ theme, onClose, onImported }: ThemeCustomizerP
   const [radius, setRadius] = useState(initial.radius ?? 14);
   const [borderStyle, setBorderStyle] = useState<BorderStyleId | "">(initial.borderStyle ?? "");
   const [importError, setImportError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,11 +60,12 @@ export function ThemeCustomizer({ theme, onClose, onImported }: ThemeCustomizerP
   }
 
   async function handleExport() {
+    setExportError(null);
     apply(); // make sure what gets exported matches what's currently shown
     try {
       await exportTheme(theme.id);
     } catch (err) {
-      console.error("theme export failed", err);
+      setExportError(err instanceof Error ? err.message : "Export failed");
     }
   }
 
@@ -168,6 +170,7 @@ export function ThemeCustomizer({ theme, onClose, onImported }: ThemeCustomizerP
           </button>
         </div>
         {importError && <p className="theme-customizer__error">{importError}</p>}
+        {exportError && <p className="theme-customizer__error">{exportError}</p>}
 
         <div className="theme-customizer__actions">
           <button type="button" className="theme-customizer__btn theme-customizer__btn--secondary" onClick={handleReset}>
