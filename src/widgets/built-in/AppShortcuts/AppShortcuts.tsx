@@ -32,6 +32,7 @@ export function AppShortcuts() {
   const [renameValue, setRenameValue] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
+  const [iconWarning, setIconWarning] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   async function refresh() {
@@ -70,15 +71,29 @@ export function AppShortcuts() {
   }
 
   async function addShortcuts(paths: string[]) {
+    const failedIcons: string[] = [];
     for (const p of paths) {
       const id = await createShortcut({ label: baseName(p), target_path: p });
       // Populate icon_data once at creation time rather than re-extracting
       // on every list load — extraction can be relatively slow.
       const iconData = await extractFileIcon(p);
-      if (iconData) await updateShortcutIcon(id, iconData);
+      if (iconData) {
+        await updateShortcutIcon(id, iconData);
+      } else {
+        failedIcons.push(baseName(p));
+      }
     }
     await refresh();
+    if (failedIcons.length > 0) {
+      setIconWarning(`Could not extract icon for: ${failedIcons.join(", ")} — letter avatar shown instead.`);
+    }
   }
+
+  useEffect(() => {
+    if (!iconWarning) return;
+    const timer = setTimeout(() => setIconWarning(null), 5000);
+    return () => clearTimeout(timer);
+  }, [iconWarning]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -198,6 +213,7 @@ export function AppShortcuts() {
         <p className="shortcuts-widget__hint">
           Drag files/apps here, or click + to browse. Double-click a name to rename, right-click to change its icon.
         </p>
+        {iconWarning && <p className="shortcuts-widget__hint">⚠ {iconWarning}</p>}
       </div>
 
       {menu &&
