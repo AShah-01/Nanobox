@@ -155,32 +155,59 @@ export function Music() {
           </>
         ) : (
           <div className="music-widget__providers">
-            {MUSIC_PROVIDERS.map((p) => (
-              <button
-                key={p.id}
-                className={`music-widget__provider ${!p.implemented ? "is-disabled" : ""}`}
-                title={p.unavailableReason ?? `Connect ${p.label}`}
-                onClick={() => selectProvider(p)}
-              >
-                {p.label}
-                {!p.implemented && <span className="music-widget__soon">soon</span>}
-              </button>
-            ))}
+            {MUSIC_PROVIDERS.filter((p) => !p.needsConfig).length > 0 && (
+              <>
+                <p className="music-widget__hint">No setup required:</p>
+                {MUSIC_PROVIDERS.filter((p) => !p.needsConfig).map((p) => (
+                  <button
+                    key={p.id}
+                    className={`music-widget__provider music-widget__provider--ready ${!p.implemented ? "is-disabled" : ""}`}
+                    title={p.unavailableReason ?? `Connect ${p.label}`}
+                    onClick={() => selectProvider(p)}
+                  >
+                    {p.label}
+                    {!p.implemented && <span className="music-widget__soon">soon</span>}
+                  </button>
+                ))}
+              </>
+            )}
+            {MUSIC_PROVIDERS.filter((p) => p.needsConfig).length > 0 && (
+              <>
+                <p className="music-widget__hint">Requires a developer account:</p>
+                {MUSIC_PROVIDERS.filter((p) => p.needsConfig).map((p) => (
+                  <button
+                    key={p.id}
+                    className={`music-widget__provider ${!p.implemented ? "is-disabled" : ""}`}
+                    title={p.unavailableReason ?? `Connect ${p.label}`}
+                    onClick={() => selectProvider(p)}
+                  >
+                    {p.label}
+                    {!p.implemented && <span className="music-widget__soon">soon</span>}
+                  </button>
+                ))}
+              </>
+            )}
           </div>
         )}
 
         {showConnectForm && (
           <div className="music-widget__connect-form">
             {showConnectForm === "spotify" && (
-              <ol className="music-widget__hint music-widget__steps">
-                <li>
-                  Create an app at <code>developer.spotify.com/dashboard</code>
-                </li>
-                <li>
-                  Add <code>{SPOTIFY_REDIRECT_URI}</code> as a Redirect URI on that app
-                </li>
-                <li>Paste the app&rsquo;s Client ID below</li>
-              </ol>
+              <>
+                <p className="music-widget__hint">
+                  This is a one-time developer setup — Spotify requires every app to register its own credentials. If you just
+                  want to see what&rsquo;s playing, the <strong>OS Media</strong> option above works without any setup.
+                </p>
+                <ol className="music-widget__hint music-widget__steps">
+                  <li>
+                    Create an app at <code>developer.spotify.com/dashboard</code>
+                  </li>
+                  <li>
+                    Add <code>{SPOTIFY_REDIRECT_URI}</code> as a Redirect URI on that app
+                  </li>
+                  <li>Paste the app&rsquo;s Client ID below</li>
+                </ol>
+              </>
             )}
             <input
               placeholder={`${providerById(showConnectForm).label} Client ID`}

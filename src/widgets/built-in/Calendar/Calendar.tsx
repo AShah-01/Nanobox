@@ -285,16 +285,30 @@ export function Calendar() {
               <span className="calendar-widget__hint">Google Calendar already connected.</span>
             ) : showGoogleForm ? (
               <div className="calendar-widget__google-form">
+                <p className="calendar-widget__hint">
+                  Google requires every app to register its own credentials — this is their policy, not a Nanobox limitation.
+                  The setup is a one-time process. Only <strong>read-only</strong> access is requested; the app never writes to
+                  or modifies your calendar.
+                </p>
+                <ol className="calendar-widget__hint">
+                  <li>
+                    Go to <code>console.cloud.google.com</code> and create a new project
+                  </li>
+                  <li>Enable the Google Calendar API for that project</li>
+                  <li>
+                    Under &ldquo;APIs &amp; Services → Credentials,&rdquo; create an OAuth 2.0 Client ID (type:{" "}
+                    <strong>Web application</strong>)
+                  </li>
+                  <li>
+                    Add <code>{GOOGLE_REDIRECT_URI}</code> as an Authorised redirect URI
+                  </li>
+                  <li>Paste the Client ID below</li>
+                </ol>
                 <input
                   placeholder="Google OAuth Client ID"
                   value={clientIdInput}
                   onChange={(e) => setClientIdInput(e.target.value)}
                 />
-                <p className="calendar-widget__hint">
-                  In Google Cloud Console, create an OAuth client (type "Web application") with redirect URI{" "}
-                  <code>{GOOGLE_REDIRECT_URI}</code>, then paste its Client ID here. Read-only access, nothing is ever written
-                  back to your calendar.
-                </p>
                 <button disabled={connecting} onClick={connectGoogle}>
                   {connecting ? "Connecting…" : "Connect"}
                 </button>
