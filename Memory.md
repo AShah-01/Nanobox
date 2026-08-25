@@ -4,7 +4,7 @@ This file is the fast-onboarding snapshot for contributors and AI agents.
 It tells you what exists, what works, what is broken, and what comes next —
 so you do not have to read the entire codebase to get started.
 
-**Last updated:** 2026-08-25 · Milestones 1–7 complete, Milestone 8 in progress.
+**Last updated:** 2026-08-25 · Milestones 1–7 complete, Milestone 8 in progress. P0/P1/P2/P3 bug fixes landed.
 
 ---
 
@@ -91,8 +91,7 @@ Export/import as `.nanowidget` JSON files.
 - [ ] Companion widget (cosmetic plant from Habit Tracker streak data)
 - [ ] Apple Music integration (blocked: needs private-key JWT from Apple Developer account)
 - [ ] YouTube Music integration (blocked: no official "now playing" API)
-- [ ] Block engine: true isolation (Web Worker or iframe sandbox — current `new Function` does not block `fetch`)
-- [ ] Block engine: execution timeout
+- [ ] Block engine: true isolation (Web Worker or iframe sandbox — `new Function` cannot be interrupted mid-loop; 2 000 ms time-budget is in place but cannot stop a true `while(true)`)
 - [ ] Linux support (currently excluded; `sync-secret-service` removed from Cargo.toml)
 - [ ] macOS hands-on testing (builds in CI but never run on real hardware)
 - [ ] Real-world OAuth verification (Spotify and Google Calendar implemented but never tested against real accounts)
@@ -101,18 +100,24 @@ Export/import as `.nanowidget` JSON files.
 
 ## Known Issues (Priority Order)
 
-| # | Priority | Issue |
-|---|---|---|
-| 1 | P0 | `DEFAULT_SPOTIFY_CLIENT_ID = ""` — music auth silently fails |
-| 2 | P0 | Google Calendar needs user-supplied client_id; no in-app guidance |
-| 3 | P0 | CustomWidget sandbox (`allow-scripts`) does not block outbound `fetch()` |
-| 4 | P1 | Silent DB failures show blank widgets — no user-visible error states |
-| 5 | P1 | Block engine custom JS: no execution timeout, no true process isolation |
-| 6 | P2 | macOS overlay window behaviour untested (tray, always-on-bottom, drag) |
-| 7 | P2 | OAuth token refresh and revoke paths untested |
-| 8 | P2 | Window dragging fix (`startDragging()`) compiled and type-checked but not confirmed by a human dragging the window |
-| 9 | P3 | No keyboard navigation across widgets and settings |
-| 10 | P3 | No first-run onboarding (user lands on a blank canvas) |
+All P0–P3 bugs from the initial audit have been fixed. Remaining open items are pre-release deferred work.
+
+| # | Priority | Issue | Status |
+|---|---|---|---|
+| 1 | P0 | `DEFAULT_SPOTIFY_CLIENT_ID = ""` — music auth silently fails | **Fixed** — UI now groups providers by setup level; clearer dev-account instructions shown |
+| 2 | P0 | Google Calendar needs user-supplied client_id; no in-app guidance | **Fixed** — numbered 5-step setup guide now shown inside the widget |
+| 3 | P0 | CustomWidget sandbox does not block outbound `fetch()` | **Fixed** — CSP `<meta>` tag injected into srcdoc blocks all outbound network calls |
+| 4 | P1 | Silent DB failures show blank widgets — no user-visible error states | **Fixed** — all widgets + WidgetGrid show an error banner on DB failure |
+| 5 | P1 | Block engine custom JS: no execution timeout | **Fixed** — 2 000 ms time-budget check; true infinite loops documented as limitation |
+| 6 | P1 | AppShortcuts: no icon warning when icon extraction fails | **Fixed** — ⚠ warning shown for paths where icon could not be read; auto-clears after 5 s |
+| 7 | P1 | ThemeCustomizer export error silently swallowed | **Fixed** — export errors now surface below the IO buttons |
+| 8 | P1 | Colourblind-off does not restore user's custom accent | **Fixed** — `applyColorblindPalette(false)` re-reads `settings:accentColor` and restores shades |
+| 9 | P2 | Overlay panel has no transition — flashes on open | **Fixed** — 120 ms fade-in on `.overlay__body`; `prefers-reduced-motion` guard added |
+| 10 | P2 | macOS overlay window behaviour untested (tray, always-on-bottom, drag) | Open — needs real macOS hardware |
+| 11 | P2 | OAuth token refresh and revoke paths untested | Open — verify with real Spotify/Google accounts |
+| 12 | P2 | Window dragging compiled but not human-confirmed | Open — test on target hardware |
+| 13 | P3 | No keyboard navigation across widgets and settings | Open |
+| 14 | P3 | No first-run onboarding (user lands on a blank canvas) | Open |
 
 ---
 

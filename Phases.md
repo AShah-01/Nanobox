@@ -131,6 +131,20 @@ Custom Widget type (sandboxed iframe, HTML/CSS/JS), per-widget colour/style sett
 
 ## Phase 8 — Polish & release (in progress)
 
+### Bug fixes (complete)
+
+- [x] **P0** Music widget: provider list split into "No setup required" vs "Requires developer account"; Spotify connect form now shows plain-English instructions
+- [x] **P0** Google Calendar: numbered 5-step OAuth setup guide shown inside the widget
+- [x] **P0** CustomWidget sandbox: CSP `<meta>` tag injected into srcdoc — blocks all outbound fetch/XHR/WebSocket; hint text updated
+- [x] **P1** All widgets + WidgetGrid: DB-load failures now show a user-visible error banner instead of staying blank
+- [x] **P1** Block engine: 2 000 ms time-budget check on custom block evaluation (true `while(true)` cannot be interrupted — documented)
+- [x] **P1** AppShortcuts: ⚠ warning when icon extraction returns null; auto-clears after 5 s
+- [x] **P1** ThemeCustomizer: export errors are now shown to the user (were silently swallowed)
+- [x] **P1** Colourblind palette off: now restores the user's saved custom accent instead of falling back to theme default
+- [x] **P2** Overlay panel: 120 ms fade-in on `.overlay__body`; `prefers-reduced-motion` guard
+
+### Remaining (pre-release)
+
 - [ ] First-run onboarding wizard: theme picker, accent colour, add first widget
 - [ ] Full keyboard navigation across all widgets and settings
 - [ ] Windows packaging: signed NSIS/MSIX installer; SmartScreen warning resolved
@@ -140,25 +154,20 @@ Custom Widget type (sandboxed iframe, HTML/CSS/JS), per-widget colour/style sett
 - [ ] Documentation site: Getting Started, Widget Reference, Block Engine Guide
 - [ ] Public release: README overhaul with demo GIF
 
-### Known P0 gaps to resolve before release
+### Open (needs hardware/accounts to verify)
 
-1. `DEFAULT_SPOTIFY_CLIENT_ID = ""` — music OAuth silently fails for anyone
-   who doesn't set their own client ID; needs either a bundled client ID or
-   an in-app "enter your Spotify app client ID" prompt
-2. Google Calendar requires a user-supplied client_id with no in-app guidance
-3. CustomWidget sandbox (`allow-scripts`) does not block outbound `fetch()` —
-   any custom widget can make arbitrary network requests; consider disabling
-   network access or adding a capability declaration
+- macOS overlay behaviour (tray, always-on-bottom, drag) — untested on real hardware
+- OAuth token refresh/revoke paths — unverified against real Spotify/Google accounts
+- Window dragging — compiled and type-checked, needs human confirmation
 
 ---
 
 ## What's Next
 
-Phase 8 is the current focus. Priority order:
+Phase 8 remaining pre-release work, priority order:
 
-1. Fix P0 auth gaps (Spotify client ID, Google Calendar guidance)
-2. Onboarding wizard
-3. Keyboard navigation pass
-4. Code signing (Windows first, then macOS)
-5. Auto-update
-6. Docs site + public release
+1. Onboarding wizard
+2. Keyboard navigation pass
+3. Code signing (Windows first, then macOS)
+4. Auto-update
+5. Docs site + public release
