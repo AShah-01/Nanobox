@@ -40,8 +40,16 @@ function parseSettings(raw: string | null): CustomWidgetCode {
   }
 }
 
+const SRCDOC_CSP = [
+  "default-src 'none'",
+  "script-src 'unsafe-inline'",
+  "style-src 'unsafe-inline'",
+  "img-src data: blob:",
+  "font-src data:",
+].join("; ");
+
 function buildSrcDoc(code: CustomWidgetCode): string {
-  return `<!doctype html><html><head><meta charset="utf-8"><style>${code.css}</style></head><body>${code.html}<script>${code.js}<\/script></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${SRCDOC_CSP}"><style>${code.css}</style></head><body>${code.html}<script>${code.js}<\/script></body></html>`;
 }
 
 interface CustomWidgetProps {
@@ -108,8 +116,8 @@ export function CustomWidget({ instance, onSaved }: CustomWidgetProps) {
               <textarea value={code.js} onChange={(e) => setCode({ ...code, js: e.target.value })} rows={4} />
             </label>
             <p className="custom-widget__hint">
-              Runs sandboxed — no access to Nanobox data, files, or Tauri APIs. Network calls from your JS aren't
-              blocked yet. Saving also writes a copy to your custom-widgets folder as a <code>.nanowidget.json</code>{" "}
+              Runs sandboxed — no access to Nanobox data, files, or Tauri APIs. Network calls from your JS are blocked.
+              Saving also writes a copy to your custom-widgets folder as a <code>.nanowidget.json</code>{" "}
               file.
             </p>
             <div className="custom-widget__actions">

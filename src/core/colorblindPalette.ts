@@ -1,3 +1,5 @@
+import { deriveShades } from "./colorShades";
+
 const STORAGE_KEY = "settings:colorblindPalette";
 const ATTR = "data-colorblind";
 
@@ -25,9 +27,19 @@ export function applyColorblindPalette(enabled: boolean): void {
     root.style.setProperty("--nb-surface-alt", COLORBLIND_SURFACE_ALT);
   } else {
     root.removeAttribute(ATTR);
-    root.style.removeProperty("--nb-accent");
-    root.style.removeProperty("--nb-accent-text");
-    root.style.removeProperty("--nb-surface-alt");
+    // Restore the user's saved accent colour instead of falling back to the
+    // theme CSS file default, which would discard any custom colour they set.
+    const savedAccent = localStorage.getItem("settings:accentColor");
+    if (savedAccent) {
+      const shades = deriveShades(savedAccent);
+      root.style.setProperty("--nb-accent", shades.accent);
+      root.style.setProperty("--nb-accent-text", shades.accentText);
+      root.style.setProperty("--nb-surface-alt", shades.surfaceAlt);
+    } else {
+      root.style.removeProperty("--nb-accent");
+      root.style.removeProperty("--nb-accent-text");
+      root.style.removeProperty("--nb-surface-alt");
+    }
   }
 }
 

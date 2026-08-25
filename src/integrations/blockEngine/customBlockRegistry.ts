@@ -26,9 +26,28 @@ export type CustomBlockEvaluator = (inputs: Record<string, unknown>) => unknown;
 
 const EVALUATORS = new Map<string, CustomBlockEvaluator>();
 
+/**
+ * Maximum time budget for a single custom block evaluation. This check fires
+ * AFTER the function returns — it cannot interrupt a true infinite loop
+ * (`while(true){}`), which will still hang the tab. That case requires a Web
+ * Worker, which needs a bundler config change deferred to a later milestone.
+ * What this DOES catch: accidental slow loops that eventually finish but
+ * take an unreasonable amount of time, surfacing them as errors on the next
+ * evaluation tick instead of silently blocking the UI.
+ */
+export const CUSTOM_BLOCK_TIMEOUT_MS = 2_000;
+
 /** Compiles a body string, throwing a SyntaxError if it doesn't parse. */
 export function compileCustomBlockBody(jsBody: string): CustomBlockEvaluator {
-  return new Function("inputs", jsBody) as CustomBlockEvaluator;
+  const inner = new Function("inputs", jsBody) as CustomBlockEvaluator;
+  return function timedEvaluator(inputs: Record<string, unknown>): unknown {
+    const start = Date.now();
+    const result = inner(inputs);
+    if (Date.now() - start > CUSTOM_BLOCK_TIMEOUT_MS) {
+      throw new Error(`Custom block exceeded ${CUSTOM_BLOCK_TIMEOUT_MS}ms time budget`);
+    }
+    return result;
+  };
 }
 
 export function setCustomBlockEvaluator(defId: string, run: CustomBlockEvaluator): void {
