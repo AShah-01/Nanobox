@@ -104,5 +104,5 @@ can be authored in the app (JavaScript body, sandboxed via `new Function`).
 ## Status
 
 **Version:** 0.1.0 (pre-release)
-**Milestones complete:** 1–7 (foundation, widget engine, integrations, block engine, theme engine, ADHD toolkit, polish)
-**Milestone 8:** Packaging, code signing, docs, public release — in progress
+**Milestones complete:** 1–7 (foundation, widget engine, integrations, block engine, theme engine, ADHD toolkit, window polish)
+**Milestone 8:** In progress — P0–P2 bug sweep complete; remaining work is onboarding, code signing, auto-update, and public release

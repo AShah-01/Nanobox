@@ -7,7 +7,7 @@
 > calendar, alarms, clocks, shortcuts, and a lego-block custom widget builder,
 > all in one persistent, themeable desktop hub.
 
-**Status:** Pre-release, active development — Milestones 1–7 complete (block engine, theme engine, integrations, ADHD toolkit, window chrome). Milestone 8 (packaging, docs, release) in progress. See [Phases.md](Phases.md).
+**Status:** Pre-release, active development — Milestones 1–7 complete, Phase 8 bug-fix sweep done. Working toward first signed release (onboarding, code signing, auto-update). See [Phases.md](Phases.md).
 
 ---
 
@@ -254,9 +254,9 @@ before a big PR will save both of us time.
 
 ### 🎵 Help wanted — Music widget
 
-The Music widget currently supports **Spotify** (OAuth PKCE) and the
-**OS media session** (Windows SMTC — picks up anything playing audio).
-Two services we'd love to add but are genuinely blocked on:
+The Music widget currently supports **Spotify** (OAuth PKCE, developer app required) and the
+**OS media session** (Windows SMTC — picks up anything playing audio, no setup).
+Two providers we'd love to add but are genuinely blocked on:
 
 - **Apple Music** — requires a private-key-signed JWT from an Apple Developer
   account. There's no public API path that works client-side without one.
@@ -322,19 +322,18 @@ applicable here. Open an issue or a discussion.
 
 Nanobox has been built and tested in a development environment — it has never
 been lived in by real users at scale. If you try it and something feels off,
-broken, or just odd, **please open an issue**. Specifically looking for help
-with:
+broken, or just odd, **please open an issue**. The P0–P2 bug sweep is done
+(silent failures, sandbox, palette restore, UI polish) but the following
+still need real-world eyes:
 
-- **macOS**: the codebase targets macOS 12+ but has only been built there
-  in CI, never tested hands-on. Anything broken on Mac is a priority fix.
 - **OAuth flows**: Spotify and Google Calendar OAuth have been implemented
   and compile clean, but the flows have not been exercised against real
-  accounts in a real environment. First-time auth, token refresh, and revoke
-  paths are the most likely to have edge-case bugs.
-- **Window behaviour**: window dragging, tray icon, startup-on-login, and
-  the always-on-top overlay all depend on OS-level behaviour that varies
-  by Windows version and display setup. Bug reports with your OS version
-  and display config are very helpful.
+  accounts. First-time auth, token refresh, and revoke paths are the most
+  likely to have edge-case bugs.
+- **Window behaviour**: window dragging (`startDragging()` API), tray icon,
+  startup-on-login, and the always-on-bottom overlay all depend on OS-level
+  behaviour that varies by Windows version and display setup. Bug reports
+  with your OS version and display config are very helpful.
 - **Performance on real hardware**: the app has been profiled in dev mode
   only. If it feels sluggish on your machine, open an issue with your specs.
 

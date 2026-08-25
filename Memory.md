@@ -60,10 +60,11 @@ Export/import as `.nanowidget` JSON files.
 
 **Phase 8 — Polish & Release** (current)
 
-- P0 auth gaps (see Known Issues below)
-- Onboarding wizard (first-run: theme picker, accent, add first widget)
-- Full keyboard navigation
-- Code signing (Windows NSIS, macOS DMG)
+The P0–P2 bug sweep is complete (see Known Issues table below). Active focus is now:
+
+- Onboarding wizard (first-run: theme picker, accent colour, add first widget)
+- Full keyboard navigation pass
+- Code signing (Windows EV/OV cert, macOS Apple Developer notarization)
 - Auto-update (`tauri-plugin-updater`)
 - Docs site and public release
 
@@ -73,10 +74,21 @@ Export/import as `.nanowidget` JSON files.
 
 ### Phase 8 checklist
 
-- [ ] Fix `DEFAULT_SPOTIFY_CLIENT_ID = ""` — needs bundled or user-entered client ID
-- [ ] Google Calendar: add in-app guidance for supplying client_id
-- [ ] CustomWidget sandbox: block outbound `fetch()` or add a capability declaration
-- [ ] Onboarding wizard
+**Bug fixes — complete**
+
+- [x] Music widget: UX overhaul — providers grouped by setup level, Spotify form improved
+- [x] Google Calendar: 5-step in-app OAuth setup guide
+- [x] CustomWidget: CSP `<meta>` injected into srcdoc — blocks all outbound network calls
+- [x] All widgets + WidgetGrid: DB-failure error banners (no more silent blank widgets)
+- [x] Block engine: 2 000 ms time-budget check on custom block evaluation
+- [x] AppShortcuts: icon-extraction warning with 5 s auto-clear
+- [x] ThemeCustomizer: export errors surfaced to the user
+- [x] Colourblind palette off: restores user's saved custom accent
+- [x] Overlay panel: 120 ms fade-in; `prefers-reduced-motion` guard
+
+**Pre-release — remaining**
+
+- [ ] Onboarding wizard (theme picker, accent, add first widget)
 - [ ] Keyboard navigation pass
 - [ ] Windows code signing (EV/OV certificate or sponsored signing)
 - [ ] macOS code signing + notarization (Apple Developer account required)
