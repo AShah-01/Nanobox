@@ -7,7 +7,7 @@
 > calendar, alarms, clocks, shortcuts, and a lego-block custom widget builder,
 > all in one persistent, themeable desktop hub.
 
-**Status:** Pre-release, active development — Milestones 1–7 complete (block engine, theme engine, integrations, ADHD toolkit, window chrome). Milestone 8 (packaging, docs, release) in progress. See [ROADMAP.md](ROADMAP.md).
+**Status:** Pre-release, active development — Milestones 1–7 complete (block engine, theme engine, integrations, ADHD toolkit, window chrome). Milestone 8 (packaging, docs, release) in progress. See [Phases.md](Phases.md).
 
 ---
 
@@ -48,9 +48,13 @@ nanobox/
 │   └── Cargo.toml
 ├── tests/
 ├── public/fonts/
-├── ROADMAP.md
+├── PRD.md
+├── Architecture.md
+├── Rules.md
+├── Phases.md
+├── Design.md
+├── Memory.md
 ├── PROGRESS.md
-├── PLAN.md
 └── package.json
 ```
 
@@ -145,9 +149,8 @@ whatever launched them.
 
 ## Roadmap & progress
 
-- [ROADMAP.md](ROADMAP.md) — milestone-by-milestone build order
+- [Phases.md](Phases.md) — milestone-by-milestone plan and current focus
 - [PROGRESS.md](PROGRESS.md) — session-by-session log of what's shipped
-- [PLAN.md](PLAN.md) — current focus and working agreement
 
 ## Contributing
 
